@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Dashboard — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f5f4f0;--sur:#fff;--sur2:#f0efe9;--bor:rgba(0,0,0,0.09);--bor2:rgba(0,0,0,0.15);--tx:#1a1a18;--tx2:#6b6b67;--tx3:#9e9e99;--navy:#1a3a5c;--navy2:#2e5a8a;--grn:#2d6a4f;--gbg:#d8f3dc;--red:#9b2335;--rbg:#fce4e7;--amb:#7c4d00;--abg:#fff0cc;--blu:#1a4fa0;--bbg:#dbeafe;--r:10px;--rl:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;min-height:100vh}
+.app{display:flex;min-height:100vh}
+.sb{width:215px;min-width:215px;background:var(--navy);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:9px}
+.lm{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center}
+.lm svg{width:14px;height:14px;fill:#fff}
+.lt{font-size:14px;font-weight:500;color:#fff}
+.ls{font-size:10px;color:#fff;font-family:'DM Mono',monospace}
+.nav{padding:10px 10px;flex:1}
+.ng{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,0.28);padding:10px 8px 4px;font-weight:500}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,0.48);margin-bottom:2px;font-size:12.5px;transition:all .12s}
+.ni:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85)}
+.ni.active{background:rgba(255,255,255,0.14);color:#fff;font-weight:500}
+.ni svg{width:14px;height:14px;flex-shrink:0}
+.sf{padding:10px 14px;border-top:1px solid rgba(255,255,255,0.08);font-size:10px;color:rgba(255,255,255,0.28);font-family:'DM Mono',monospace;line-height:1.5;white-space:pre-wrap}
+.ub{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.45);padding:9px 14px;border-top:1px solid rgba(255,255,255,0.08)}
+.ub svg{width:12px;height:12px;fill:none;stroke:rgba(255,255,255,0.35);stroke-width:1.5;flex-shrink:0}
+.lob{margin-left:auto;font-size:10px;color:rgba(255,255,255,0.3);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);background:none;font-family:'DM Sans',sans-serif;transition:all .12s}
+.lob:hover{color:#fff;border-color:rgba(255,255,255,0.4)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--sur);border-bottom:1px solid var(--bor);padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:10}
+.pt{font-size:14px;font-weight:500}
+.ps{font-size:11px;color:var(--tx2);margin-top:2px}
+.tact{display:flex;align-items:center;gap:8px}
+.btn-up{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:8px;background:var(--navy);color:#fff;border:none;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;transition:background .15s}
+.btn-up:hover{background:var(--navy2)}
+.btn-up svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2}
+.btn-copy{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:8px;background:#2d8a5a;color:#fff;border:none;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;transition:background .15s}
+.btn-copy:hover{background:#1f6340}
+.btn-eye{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:transparent;border:1px solid var(--bor2);cursor:pointer;transition:all .15s;color:var(--tx2)}
+.btn-eye:hover{background:var(--sur2);color:var(--tx)}
+.btn-eye svg{width:14px;height:14px}
+.btn-eye.hidden-mode{background:#faeeda;border-color:#d4a017;color:#7c4d00}
+/* Valores ocultos — tracinho centralizado */
+.val-hidden{color:transparent!important;display:inline-block;min-width:36px;position:relative}
+.val-hidden::after{content:'– –';color:#c5cdd8;font-size:13px;font-weight:400;position:absolute;left:0;top:0;width:100%;text-align:left;letter-spacing:2px}
+#fi{display:none}
+.sdot{width:7px;height:7px;border-radius:50%;background:#ccc;display:inline-block;margin-right:4px}
+.sdot.ok{background:#4caf50}.sdot.err{background:#e53935}
+.stxt{font-size:11px;color:var(--tx2);font-family:'DM Mono',monospace}
+.ct{padding:18px 22px;flex:1}
+.sec{display:none}.sec.active{display:block}
+.lw{position:fixed;inset:0;background:#f5f4f0;display:flex;align-items:center;justify-content:center;z-index:999}
+.lw.hidden{display:none}
+.lb{background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:16px;padding:38px 42px;width:100%;max-width:370px;text-align:center}
+.llo{width:42px;height:42px;background:#1a3a5c;border-radius:11px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.llo svg{width:20px;height:20px;fill:#fff}
+.ltit{font-size:19px;font-weight:500;margin-bottom:5px}
+.lsub{font-size:12px;color:#6b6b67;margin-bottom:26px}
+.lf{margin-bottom:13px;text-align:left}
+.lf label{display:block;font-size:10px;color:#6b6b67;margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.lf input{width:100%;padding:9px 12px;border:1px solid rgba(0,0,0,0.14);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:#1a1a18;outline:none;transition:border .15s}
+.lf input:focus{border-color:#1a3a5c}
+.lbtn{width:100%;padding:10px;background:#1a3a5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:4px;transition:background .15s}
+.lbtn:hover{background:#2e5a8a}
+.lerr{font-size:12px;color:#9b2335;background:#fce4e7;border-radius:7px;padding:8px 12px;margin-top:10px;display:none}
+.lerr.show{display:block}
+.ups{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px}
+.upb{border:2px dashed var(--bor2);border-radius:var(--rl);padding:50px 60px;cursor:pointer;transition:all .15s;background:var(--sur);text-align:center}
+.upb:hover{border-color:var(--navy);background:#f0f4f8}
+.upi{width:46px;height:46px;margin:0 auto 13px;background:#e8eef5;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.upi svg{width:22px;height:22px;fill:none;stroke:var(--navy);stroke-width:1.5}
+.upt{font-size:14px;font-weight:500;margin-bottom:5px}
+.ups2{font-size:11px;color:var(--tx2)}
+.uph{font-size:10px;color:var(--tx3);margin-top:7px;font-family:'DM Mono',monospace}
+.share-box{background:#e8eef5;border:1px solid #c5d5e8;border-radius:var(--r);padding:14px 16px;margin-top:16px;text-align:left}
+.share-box p{font-size:12px;color:var(--navy);margin-bottom:8px;font-weight:500}
+.share-box input{width:100%;padding:7px 10px;border:1px solid #c5d5e8;border-radius:7px;font-size:11px;font-family:'DM Mono',monospace;color:var(--tx);background:#fff;outline:none}
+.share-btn{margin-top:8px;padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
+.share-btn:hover{background:var(--navy2)}
+.kg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.kg3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kg5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.kc{background:var(--sur);border:1px solid var(--bor);border-radius:var(--rl);padding:14px 16px}
+.kc-g{border-left:3px solid #4caf50}.kc-a{border-left:3px solid #f59e0b}
+.kl{font-size:10px;color:#4a7fa5;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500}
+.kv{font-size:20px;font-weight:500;letter-spacing:-.02em;margin-bottom:4px;color:var(--tx)}
+.kb{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+.bg{background:var(--gbg);color:var(--grn)}.br{background:var(--rbg);color:var(--red)}.ba{background:var(--abg);color:var(--amb)}.bb{background:var(--bbg);color:var(--blu)}.bn{background:#dde8f5;color:var(--navy)}
+.crow{display:grid;gap:13px;margin-bottom:16px}
+.c2{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.ceq{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cc{background:var(--sur);border:1px solid var(--bor);border-radius:var(--rl);padding:15px 17px;margin-bottom:16px}
+.cc:last-child{margin-bottom:0}
+.cct{font-size:12px;font-weight:500}
+.ccs{font-size:10px;color:var(--tx2);margin-top:2px;margin-bottom:12px}
+.leg{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:10px}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx2)}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.tc{background:var(--sur);border:1px solid var(--bor);border-radius:var(--rl);overflow:hidden;margin-bottom:16px}
+.th{padding:11px 15px;border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.th span{font-size:12px;font-weight:500}
+.tfs{display:flex;gap:5px;flex-wrap:wrap}
+.fs{padding:4px 8px;border-radius:6px;border:1px solid var(--bor2);background:var(--sur);font-size:11px;color:var(--tx);font-family:'DM Sans',sans-serif;cursor:pointer}
+select.fs[multiple]{height:28px;overflow:hidden;cursor:pointer;min-width:110px}
+select.fs[multiple]:focus{height:auto;min-height:60px;max-height:160px;overflow-y:auto;position:absolute;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.tsc{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+thead th{padding:8px 13px;text-align:left;font-size:10px;font-weight:500;color:var(--tx3);border-bottom:1px solid var(--bor);background:var(--sur2);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+thead th.r{text-align:right}
+tbody td{padding:8px 13px;border-bottom:1px solid var(--bor);color:var(--tx)}
+tbody td.r{text-align:right}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--sur2)}
+.pos{color:var(--grn)}.neg{color:var(--red)}
+.pill{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+.pc{background:var(--gbg);color:var(--grn)}.pp{background:var(--abg);color:var(--amb)}.pd{background:var(--rbg);color:var(--red)}.pb{background:var(--bbg);color:var(--blu)}
+.empty td{text-align:center;color:var(--tx3);padding:24px;font-size:12px}
+.errbanner{background:var(--rbg);border:1px solid rgba(155,35,53,0.2);border-radius:var(--r);padding:11px 15px;margin-bottom:14px;font-size:12px;color:var(--red);display:none}
+.errbanner.show{display:block}
+.prog-bar{height:6px;background:var(--sur2);border-radius:3px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;border-radius:3px;background:#4caf50}
+.date-filter{padding:4px 8px 10px}
+.df-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.df-label{font-size:10px;color:rgba(255,255,255,0.4);width:22px;flex-shrink:0;font-family:'DM Mono',monospace}
+.df-input{flex:1;padding:5px 7px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);font-size:10px;color:rgba(255,255,255,0.85);font-family:'DM Sans',sans-serif;outline:none;transition:border .15s;color-scheme:dark}
+.df-input:focus{border-color:rgba(255,255,255,0.4)}
+.df-input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.5;cursor:pointer}
+.df-clear{display:flex;align-items:center;gap:5px;width:100%;padding:5px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:rgba(255,255,255,0.45);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;margin-top:2px}
+.df-clear:hover{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8)}
+/* Cards de pendentes */
+.pend-card{background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:13px 15px;display:flex;flex-direction:column;gap:5px;border-left:3px solid #ba9d3a}
+.pend-card.entrada{border-left-color:#3a8fc4}
+.pc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pc-banco{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;background:#dde8f5;color:#1a3a5c}
+.pc-data{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace}
+.pc-val{font-size:16px;font-weight:500}
+.pc-val.neg{color:#9b2335}.pc-val.pos{color:#2d6a4f}
+.pc-desc{font-size:11px;color:var(--tx2);line-height:1.4}
+.pc-tipo{font-size:10px;color:var(--tx3);margin-top:2px}
+.gauge-wrap{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.gauge-ring{position:relative;width:76px;height:76px;flex-shrink:0}
+.gauge-ring svg{transform:rotate(-90deg)}
+.gauge-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500}
+.gauge-info .gi-t{font-size:12px;font-weight:500;margin-bottom:2px}
+.gauge-info .gi-s{font-size:11px;color:var(--tx2)}
+/* Hero — Radar de vencimentos + Calendário de pagamentos */
+.hero-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.radar-card{background:var(--navy);border-radius:var(--rl);padding:18px 20px;color:#fff;display:flex;flex-direction:column;min-width:0;grid-column:span 2}
+.radar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.radar-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);font-weight:500}
+.radar-live{font-size:8px;background:rgba(93,202,165,.18);color:#5DCAA5;padding:2px 8px;border-radius:20px;font-weight:500;letter-spacing:.03em}
+.radar-value{font-size:23px;font-weight:500;margin-bottom:3px;letter-spacing:-.02em}
+.radar-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-bottom:14px;line-height:1.5}
+.radar-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.radar-item{display:flex;justify-content:space-between;align-items:center;font-size:11px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px}
+.radar-item:first-child{border-top:none;padding-top:0}
+.radar-item-label{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.7)}
+.radar-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.radar-item-value{font-weight:500}
+.radar-btn{margin-top:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:11px;padding:9px 12px;border-radius:8px;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;transition:background .15s}
+.radar-btn:hover{background:rgba(255,255,255,.2)}
+@media (max-width:900px){.hero-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app" id="appWrap" style="display:flex">
+<aside class="sb">
+  <div class="logo">
+    <div class="lm"><svg viewBox="0 0 16 16"><path d="M2 12h12v1.5H2zm0-4h8v1.5H2zm0-4h5v1.5H2z"/></svg></div>
+    <div><div class="lt">Finance</div><div class="ls">Dashboard</div></div>
+  </div>
+  <nav class="nav">
+    <div class="ng">Análises</div>
+    <div class="ni active" data-s="geral" onclick="nav(this)">
+      <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Visão Geral
+    </div>
+    <div class="ni" data-s="fluxo" onclick="nav(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 13L4 8l3 2 3-5 4 6"/><circle cx="1" cy="13" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="14" cy="11" r="1.2" fill="currentColor" stroke="none"/></svg>Fluxo de Caixa
+    </div>
+    <div class="ni" data-s="despesas" onclick="nav(this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 14V8l6-6 6 6v6"/><path d="M6 14v-4h4v4"/></svg>Despesas
+    </div>
+
+    <div class="ng" style="margin-top:8px">Filtro de período <span id="filter-badge" style="display:none;background:rgba(58,143,196,0.35);color:#7ec8e3;font-size:8px;padding:1px 5px;border-radius:8px;margin-left:3px;text-transform:none;letter-spacing:0">ativo</span></div>
+    <div class="date-filter">
+      <div class="df-row">
+        <label class="df-label">De</label>
+        <input type="date" class="df-input" id="fDe" onchange="applyDateFilter()">
+      </div>
+      <div class="df-row">
+        <label class="df-label">Até</label>
+        <input type="date" class="df-input" id="fAte" onchange="applyDateFilter()">
+      </div>
+      <button class="df-clear" id="dfClear" onclick="clearDateFilter()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="10" height="10"><line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/></svg>
+        Limpar filtro
+      </button>
+    </div>
+  </nav>
+  <div class="sf" id="sfooter">Nenhum arquivo carregado</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div><div class="pt" id="pt">Visão Geral</div><div class="ps" id="ps">Carregue o arquivo para começar</div></div>
+    <div class="tact">
+      <button class="btn-eye" id="btnEye" onclick="toggleValues()" title="Ocultar/revelar valores" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <div id="upa" style="display:none;align-items:center;gap:6px;position:relative">
+        <button class="btn-up" onclick="document.getElementById('fi').click()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Carregar Excel
+        </button>
+        <button class="btn-eye" id="btnMenuToggle" title="Mais opções" onclick="toggleAdminMenu()" style="position:relative">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <div id="adminMenu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid var(--bor2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:190px;z-index:50;overflow:hidden">
+          <button class="btn-copy" id="btnCopy" style="display:none;width:100%;justify-content:flex-start;border-radius:0;background:transparent;color:var(--tx);padding:10px 14px" onclick="copyLink();toggleAdminMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Copiar link p/ time
+          </button>
+          <button class="btn-copy" style="width:100%;justify-content:flex-start;border-radius:0;background:transparent;color:var(--tx);padding:10px 14px" title="Limpar dados salvos neste navegador e recarregar" onclick="toggleAdminMenu();if(confirm('Limpar o cache local deste navegador e recarregar a página?')){localStorage.removeItem('fp_demo_local_data');location.reload();}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Limpar cache
+          </button>
+        </div>
+        <input type="file" id="fi" accept=".xlsx,.xls" onchange="onFile(event)">
+      </div>
+    </div>
+  </div>
+  <script>
+    function toggleAdminMenu(){
+      const m=document.getElementById('adminMenu');
+      if(!m)return;
+      m.style.display=m.style.display==='none'?'block':'none';
+    }
+    document.addEventListener('click',e=>{
+      const menu=document.getElementById('adminMenu'),btn=document.getElementById('btnMenuToggle');
+      if(menu&&menu.style.display==='block'&&!menu.contains(e.target)&&e.target!==btn&&!btn.contains(e.target)){
+        menu.style.display='none';
+      }
+    });
+  </script>
+
+  <div class="ct">
+    <div class="errbanner" id="errBanner"></div>
+
+    <!-- VISÃO GERAL -->
+    <div class="sec active" id="s-geral">
+      <div id="upg">
+        <div class="ups"><div class="upb" onclick="document.getElementById('fi').click()">
+          <div class="upi"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+          <div class="upt">Carregar RELATORIO_MASTER</div>
+          <div class="ups2">Selecione o arquivo .xlsx exportado do sistema</div>
+          <div class="uph">Após carregar, copie o link e envie para o time</div>
+        </div></div>
+      </div>
+      <div id="diagBox" style="display:none;max-width:520px;margin:16px auto 0;background:#fff3cd;border:1px solid #e6c568;border-radius:10px;padding:14px 16px;font-family:'DM Mono',monospace;font-size:11px;color:#5a4a1a;line-height:1.7;white-space:pre-wrap;word-break:break-all"></div>
+      <div id="dg" style="display:none">
+        <div class="hero-row">
+          <div class="cc" style="margin-bottom:0;min-width:0;grid-column:span 1;overflow:hidden;display:flex;flex-direction:column">
+            <div class="cct">Saldo por banco</div>
+            <div class="ccs">Posição atual em cada conta</div>
+            <div id="saldoBancoList" style="margin-top:10px;display:flex;flex-direction:column;gap:10px;flex:1"></div>
+          </div>
+          <div class="cc" style="margin-bottom:0;min-width:0;grid-column:span 2;overflow:hidden">
+            <div class="cct">Calendário de pagamentos</div>
+            <div class="ccs">Pendentes sem baixa &nbsp;<span style="color:#2e6da4;font-size:10px">●</span> a vencer &nbsp;<span style="color:#9b2335;font-size:10px">●</span> atrasado</div>
+            <div style="margin-top:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <button id="calGPrev" onclick="calNav('calG',-1)" style="background:none;border:1px solid var(--bor);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;color:var(--tx2)">&#8249;</button>
+                <span id="calGTitle" style="font-weight:500;font-size:13px;color:var(--tx)"></span>
+                <button id="calGNext" onclick="calNav('calG',1)" style="background:none;border:1px solid var(--bor);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;color:var(--tx2)">&#8250;</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;text-align:center;margin-bottom:4px">
+                <span style="font-size:10px;color:var(--tx3);font-weight:500">D</span><span style="font-size:10px;color:var(--tx3);font-weight:500">S</span><span style="font-size:10px;color:var(--tx3);font-weight:500">T</span><span style="font-size:10px;color:var(--tx3);font-weight:500">Q</span><span style="font-size:10px;color:var(--tx3);font-weight:500">Q</span><span style="font-size:10px;color:var(--tx3);font-weight:500">S</span><span style="font-size:10px;color:var(--tx3);font-weight:500">S</span>
+              </div>
+              <div id="calGGrid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px"></div>
+              <div id="calGDetail" style="margin-top:10px;display:none;background:var(--sur2);border-radius:8px;padding:10px;border:1px solid var(--bor)">
+                <div id="calGDetailTitle" style="font-weight:500;font-size:12px;color:var(--tx);margin-bottom:6px"></div>
+                <div id="calGDetailList" style="font-size:11px;color:var(--tx2);max-height:130px;overflow-y:auto;line-height:1.7"></div>
+              </div>
+            </div>
+          </div>
+          <div class="radar-card">
+            <div class="radar-head">
+              <span class="radar-label">Radar financeiro</span>
+              <span class="radar-live">Ao vivo</span>
+            </div>
+            <div class="radar-value" id="radar-value">—</div>
+            <div class="radar-sub" id="radar-subtext">aguardando dados</div>
+            <div class="radar-list" id="radar-list"></div>
+            <button class="radar-btn" onclick="nav(document.querySelector('[data-s=fluxo]'))">Ver fluxo de caixa →</button>
+          </div>
+        </div>
+        <div class="kg kg3" id="kg-geral" style="margin-bottom:16px"></div>
+        <div class="crow c2">
+          <div class="cc"><div class="cct">Fluxo de caixa — entradas vs saídas diárias</div><div class="ccs">Movimentação por dia útil</div>
+            <div class="leg"><div class="li"><div class="ld" style="background:#3a8fc4"></div>Entradas</div><div class="li"><div class="ld" style="background:#ba9d3a"></div>Saídas</div><div class="li"><div class="ld" style="background:#1a3a5c;border-radius:50%"></div>Saldo total</div></div>
+            <div style="position:relative;width:100%;height:210px"><canvas id="cFluxo"></canvas></div>
+          </div>
+          <div class="cc"><div class="cct">Top saídas por categoria</div><div class="ccs">Maiores categorias CF XP de saída</div>
+            <div style="position:relative;width:100%;height:230px"><canvas id="cTipoGeral"></canvas></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FLUXO -->
+    <div class="sec" id="s-fluxo">
+      <div class="kg" id="kg-fluxo"></div>
+      <div class="cc"><div class="cct">Saldo consolidado diário</div><div class="ccs">Evolução do saldo total — todos os bancos</div>
+        <div class="leg"><div class="li"><div class="ld" style="background:#1a3a5c;border-radius:50%"></div>Saldo (lançamentos baixados)</div><div class="li"><div class="ld" style="background:#D85A30;border-radius:50%"></div>Saldo real (aba SALDO)</div></div>
+        <div style="position:relative;width:100%;height:240px"><canvas id="cSaldoDia"></canvas></div>
+        <div id="cSaldoDiaNote" style="display:none;font-size:10px;color:var(--tx3);margin-top:8px">↑ Linha laranja exibida com deslocamento visual para não ficar escondida atrás da azul — passe o mouse para ver o valor real de cada dia.</div>
+      </div>
+    </div>
+
+    <!-- DESPESAS -->
+    <div class="sec" id="s-despesas">
+      <div class="kg" id="kg-desp"></div>
+      <div class="crow" style="grid-template-columns:minmax(0,1fr) 420px">
+        <div class="cc"><div class="cct">Despesas por categoria</div><div class="ccs">Ranking das maiores categorias de saída</div>
+          <div style="position:relative;width:100%;height:260px"><canvas id="cDespBar"></canvas></div>
+        </div>
+        <div class="cc" style="min-width:0;overflow:hidden">
+          <div class="cct">Calendário de pagamentos</div>
+          <div class="ccs">Pendentes sem baixa &nbsp;<span style="color:#2e6da4;font-size:10px">●</span> a vencer &nbsp;<span style="color:#9b2335;font-size:10px">●</span> atrasado</div>
+          <div id="calWrap" style="margin-top:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <button id="calPrev" onclick="calNav('cal',-1)" style="background:none;border:1px solid var(--bor);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;color:var(--tx2)">&#8249;</button>
+              <span id="calTitle" style="font-weight:500;font-size:13px;color:var(--tx)"></span>
+              <button id="calNext" onclick="calNav('cal',1)" style="background:none;border:1px solid var(--bor);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;color:var(--tx2)">&#8250;</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;text-align:center;margin-bottom:4px">
+              <span style="font-size:10px;color:var(--tx3);font-weight:500">D</span><span style="font-size:10px;color:var(--tx3);font-weight:500">S</span><span style="font-size:10px;color:var(--tx3);font-weight:500">T</span><span style="font-size:10px;color:var(--tx3);font-weight:500">Q</span><span style="font-size:10px;color:var(--tx3);font-weight:500">Q</span><span style="font-size:10px;color:var(--tx3);font-weight:500">S</span><span style="font-size:10px;color:var(--tx3);font-weight:500">S</span>
+            </div>
+            <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px"></div>
+            <div id="calDetail" style="margin-top:10px;display:none;background:var(--sur2);border-radius:8px;padding:10px;border:1px solid var(--bor)">
+              <div id="calDetailTitle" style="font-weight:500;font-size:12px;color:var(--tx);margin-bottom:6px"></div>
+              <div id="calDetailList" style="font-size:11px;color:var(--tx2);max-height:130px;overflow-y:auto;line-height:1.7"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cc"><div class="cct">Top fornecedores por valor</div><div class="ccs">Maiores fornecedores do período por volume de pagamento</div>
+        <div style="position:relative;width:100%;height:220px"><canvas id="cFornDesp"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const C=['#1a3a5c','#2e6da4','#3a8fc4','#4aabcc','#5dbfb0','#6aac8a','#7ab86a','#8fb554','#ba9d3a','#c4784a'];
+const charts={};
+let G={lanc:[],fluxo:[],pendentes:[],so_bases:[],saldos_finais:{},saldo_diario:[],cfxp_desp:{},cfxp_rec:{},centro_desp:{},tipo_desp:{},stats:{},loaded:false};
+// ── Dados de demonstração (fictícios) para portfólio ──
+const DEMO_DATA={"lanc": [{"id": "001000-00000020000", "banco": "Banco Alfa", "data": "25/06/2026", "valor": -33352.03, "tipo": "NF", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Bela Vista Facilities", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001001-00000020001", "banco": "Banco Delta", "data": "10/02/2026", "valor": 20298.88, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001002-00000020002", "banco": "Banco Gama", "data": "20/05/2026", "valor": -31657.76, "tipo": "TED", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001003-00000020003", "banco": "Banco Alfa", "data": "07/02/2026", "valor": -12491.82, "tipo": "IOF", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Cedro Advocacia", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001004-00000020004", "banco": "Banco Alfa", "data": "21/04/2026", "valor": -26318.96, "tipo": "RC", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Comercial", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001005-00000020005", "banco": "Banco Gama", "data": "06/04/2026", "valor": -7989.31, "tipo": "BOL", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001006-00000020006", "banco": "Banco Beta", "data": "25/06/2026", "valor": -12731.69, "tipo": "NF", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Zenith Softwares", "centro": "Administrativo", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001007-00000020007", "banco": "Banco Gama", "data": "12/02/2026", "valor": 82442.84, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001008-00000020008", "banco": "Banco Gama", "data": "14/07/2026", "valor": -6971.66, "tipo": "TAR", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Cedro Advocacia", "centro": "RH", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001009-00000020009", "banco": "Banco Alfa", "data": "02/05/2026", "valor": -34205.57, "tipo": "TAR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Comercial Estrela Azul", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001010-00000020010", "banco": "Banco Alfa", "data": "08/02/2026", "valor": -38846.46, "tipo": "IOF", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Zenith Softwares", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001011-00000020011", "banco": "Banco Gama", "data": "04/07/2026", "valor": -42958.66, "tipo": "IOF", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001012-00000020012", "banco": "Banco Beta", "data": "30/06/2026", "valor": -17326.99, "tipo": "NF", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Fenix Segurança Patrimonial", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001013-00000020013", "banco": "Banco Beta", "data": "17/04/2026", "valor": -11383.79, "tipo": "BOL", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Girassol RH Consultoria", "centro": "Comercial", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001014-00000020014", "banco": "Banco Beta", "data": "02/08/2026", "valor": -29960.99, "tipo": "JR", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "TI", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001015-00000020015", "banco": "Banco Gama", "data": "06/04/2026", "valor": -14577.86, "tipo": "FT", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Ondas Telecom", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001016-00000020016", "banco": "Banco Alfa", "data": "19/03/2026", "valor": -26809.05, "tipo": "TED", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001017-00000020017", "banco": "Banco Beta", "data": "16/02/2026", "valor": -22255.32, "tipo": "JR", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Cedro Advocacia", "centro": "TI", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001018-00000020018", "banco": "Banco Gama", "data": "08/04/2026", "valor": -29927.04, "tipo": "FT", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001019-00000020019", "banco": "Banco Gama", "data": "21/07/2026", "valor": 38028.05, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Comercial", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001020-00000020020", "banco": "Banco Beta", "data": "21/03/2026", "valor": -13111.7, "tipo": "FT", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Litoral Transportes", "centro": "RH", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001021-00000020021", "banco": "Banco Beta", "data": "07/02/2026", "valor": -41745.42, "tipo": "FT", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001022-00000020022", "banco": "Banco Gama", "data": "30/03/2026", "valor": -44350.65, "tipo": "RC", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Girassol RH Consultoria", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001023-00000020023", "banco": "Banco Gama", "data": "08/08/2026", "valor": -7642.02, "tipo": "JR", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001024-00000020024", "banco": "Banco Beta", "data": "15/02/2026", "valor": -41436.91, "tipo": "BOL", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Administrativo", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001025-00000020025", "banco": "Banco Alfa", "data": "14/02/2026", "valor": -11682.72, "tipo": "TAR", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Bela Vista Facilities", "centro": "RH", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001026-00000020026", "banco": "Banco Gama", "data": "19/06/2026", "valor": -14686.93, "tipo": "RC", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Silvestre Alimentos LTDA", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001027-00000020027", "banco": "Banco Alfa", "data": "27/04/2026", "valor": 57040.86, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Comercial", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001028-00000020028", "banco": "Banco Gama", "data": "01/06/2026", "valor": -39663.74, "tipo": "FT", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001029-00000020029", "banco": "Banco Gama", "data": "21/07/2026", "valor": -36916, "tipo": "FOL", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Girassol RH Consultoria", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001030-00000020030", "banco": "Banco Gama", "data": "10/03/2026", "valor": -27533.48, "tipo": "IOF", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Grupo Horizonte Logística", "centro": "TI", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001031-00000020031", "banco": "Banco Gama", "data": "12/04/2026", "valor": 58182.75, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Comercial", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001032-00000020032", "banco": "Banco Delta", "data": "23/01/2026", "valor": -33562.41, "tipo": "BOL", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001033-00000020033", "banco": "Banco Delta", "data": "31/07/2026", "valor": -25221.61, "tipo": "RC", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Comercial Estrela Azul", "centro": "Operacoes", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001034-00000020034", "banco": "Banco Delta", "data": "20/02/2026", "valor": -16432.6, "tipo": "TED", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Bela Vista Facilities", "centro": "Administrativo", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001035-00000020035", "banco": "Banco Delta", "data": "23/03/2026", "valor": -35381.48, "tipo": "RC", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Panorama Eventos", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001036-00000020036", "banco": "Banco Delta", "data": "09/07/2026", "valor": -9621.12, "tipo": "TED", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Prisma Consultoria Financeira", "centro": "Administrativo", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001037-00000020037", "banco": "Banco Gama", "data": "06/02/2026", "valor": -43536.5, "tipo": "TAR", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Prisma Consultoria Financeira", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001038-00000020038", "banco": "Banco Delta", "data": "04/05/2026", "valor": -2490.97, "tipo": "TAR", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Prisma Consultoria Financeira", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001039-00000020039", "banco": "Banco Alfa", "data": "25/05/2026", "valor": -32128.31, "tipo": "TED", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Operacoes", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001040-00000020040", "banco": "Banco Alfa", "data": "02/05/2026", "valor": -14675.07, "tipo": "IOF", "descricao": "Cedro Advocacia", "status": "⚠ Pendente", "tipo_lanc": "IOF", "fornecedor": "Cedro Advocacia", "centro": "Operacoes", "cfxp": "Beneficios", "conciliado": false, "pendente": true}, {"id": "001041-00000020041", "banco": "Banco Delta", "data": "15/07/2026", "valor": -9279.33, "tipo": "JR", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Zenith Softwares", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001042-00000020042", "banco": "Banco Gama", "data": "07/04/2026", "valor": -19801.06, "tipo": "FT", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Ondas Telecom", "centro": "Administrativo", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001043-00000020043", "banco": "Banco Gama", "data": "07/06/2026", "valor": -13343.36, "tipo": "RC", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Nexus Marketing Digital", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001044-00000020044", "banco": "Banco Alfa", "data": "04/03/2026", "valor": -38358.41, "tipo": "JR", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Ondas Telecom", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001045-00000020045", "banco": "Banco Alfa", "data": "04/08/2026", "valor": -31192.91, "tipo": "TED", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Panorama Eventos", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001046-00000020046", "banco": "Banco Delta", "data": "25/07/2026", "valor": -20975.61, "tipo": "IOF", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Zenith Softwares", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001047-00000020047", "banco": "Banco Delta", "data": "02/05/2026", "valor": -40227.3, "tipo": "FT", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Litoral Transportes", "centro": "Administrativo", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001048-00000020048", "banco": "Banco Delta", "data": "15/08/2026", "valor": -13057.16, "tipo": "RC", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Zenith Softwares", "centro": "TI", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001049-00000020049", "banco": "Banco Beta", "data": "20/02/2026", "valor": -4361.53, "tipo": "FOL", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Grupo Horizonte Logística", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001050-00000020050", "banco": "Banco Delta", "data": "10/02/2026", "valor": -9942.08, "tipo": "NF", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001051-00000020051", "banco": "Banco Delta", "data": "02/05/2026", "valor": -38522.4, "tipo": "JR", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Administrativo", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001052-00000020052", "banco": "Banco Delta", "data": "22/05/2026", "valor": 32243.27, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001053-00000020053", "banco": "Banco Alfa", "data": "09/06/2026", "valor": -26961.66, "tipo": "FOL", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Nexus Marketing Digital", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001054-00000020054", "banco": "Banco Delta", "data": "26/02/2026", "valor": -15717.52, "tipo": "RC", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001055-00000020055", "banco": "Banco Alfa", "data": "08/05/2026", "valor": -10710.62, "tipo": "NF", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Panorama Eventos", "centro": "Administrativo", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001056-00000020056", "banco": "Banco Beta", "data": "27/03/2026", "valor": -30390.08, "tipo": "RD", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Ondas Telecom", "centro": "Administrativo", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001057-00000020057", "banco": "Banco Alfa", "data": "03/07/2026", "valor": -43440.66, "tipo": "RC", "descricao": "Bela Vista Facilities", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Bela Vista Facilities", "centro": "RH", "cfxp": "Salarios", "conciliado": false, "pendente": true}, {"id": "001058-00000020058", "banco": "Banco Beta", "data": "31/07/2026", "valor": -9566.18, "tipo": "JR", "descricao": "Nexus Marketing Digital", "status": "⚠ Pendente", "tipo_lanc": "JR", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": false, "pendente": true}, {"id": "001059-00000020059", "banco": "Banco Gama", "data": "30/06/2026", "valor": -3847.89, "tipo": "FT", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001060-00000020060", "banco": "Banco Gama", "data": "31/05/2026", "valor": -8585.25, "tipo": "FT", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Bela Vista Facilities", "centro": "TI", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001061-00000020061", "banco": "Banco Alfa", "data": "27/05/2026", "valor": -37518.31, "tipo": "TED", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001062-00000020062", "banco": "Banco Beta", "data": "23/06/2026", "valor": 77032.9, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001063-00000020063", "banco": "Banco Gama", "data": "16/03/2026", "valor": -31792.32, "tipo": "IOF", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Administrativo", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001064-00000020064", "banco": "Banco Delta", "data": "08/02/2026", "valor": -31324.93, "tipo": "BOL", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Ondas Telecom", "centro": "Operacoes", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001065-00000020065", "banco": "Banco Gama", "data": "19/03/2026", "valor": -21718.11, "tipo": "RD", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Operacoes", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001066-00000020066", "banco": "Banco Alfa", "data": "22/07/2026", "valor": -9312.23, "tipo": "FOL", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Cedro Advocacia", "centro": "Administrativo", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001067-00000020067", "banco": "Banco Alfa", "data": "01/04/2026", "valor": -27178.15, "tipo": "RC", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Litoral Transportes", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001068-00000020068", "banco": "Banco Alfa", "data": "20/04/2026", "valor": -2811.79, "tipo": "FOL", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Fenix Segurança Patrimonial", "centro": "TI", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001069-00000020069", "banco": "Banco Alfa", "data": "04/03/2026", "valor": -15859.2, "tipo": "BOL", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001070-00000020070", "banco": "Banco Gama", "data": "10/05/2026", "valor": -7394.53, "tipo": "BOL", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Nexus Marketing Digital", "centro": "RH", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001071-00000020071", "banco": "Banco Delta", "data": "17/05/2026", "valor": -17612.71, "tipo": "TAR", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001072-00000020072", "banco": "Banco Beta", "data": "26/06/2026", "valor": 69358.13, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001073-00000020073", "banco": "Banco Delta", "data": "29/06/2026", "valor": -918.27, "tipo": "FT", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Cedro Advocacia", "centro": "Operacoes", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001074-00000020074", "banco": "Banco Beta", "data": "25/01/2026", "valor": -3946.15, "tipo": "JR", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Girassol RH Consultoria", "centro": "Administrativo", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001075-00000020075", "banco": "Banco Alfa", "data": "04/05/2026", "valor": -37337.1, "tipo": "RC", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Aurora Tecnologia LTDA", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001076-00000020076", "banco": "Banco Gama", "data": "01/07/2026", "valor": -31728.23, "tipo": "FT", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Fenix Segurança Patrimonial", "centro": "TI", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001077-00000020077", "banco": "Banco Alfa", "data": "19/02/2026", "valor": -11866.26, "tipo": "JR", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Grupo Horizonte Logística", "centro": "Comercial", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001078-00000020078", "banco": "Banco Delta", "data": "25/07/2026", "valor": -21596.14, "tipo": "FOL", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Girassol RH Consultoria", "centro": "RH", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001079-00000020079", "banco": "Banco Alfa", "data": "19/05/2026", "valor": -15532.23, "tipo": "RD", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Litoral Transportes", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001080-00000020080", "banco": "Banco Alfa", "data": "22/07/2026", "valor": -2422.01, "tipo": "RD", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001081-00000020081", "banco": "Banco Alfa", "data": "18/05/2026", "valor": -21219.35, "tipo": "RD", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001082-00000020082", "banco": "Banco Gama", "data": "04/06/2026", "valor": -6590.78, "tipo": "BOL", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Ondas Telecom", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001083-00000020083", "banco": "Banco Delta", "data": "12/07/2026", "valor": -1404.41, "tipo": "BOL", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Nexus Marketing Digital", "centro": "TI", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001084-00000020084", "banco": "Banco Gama", "data": "02/03/2026", "valor": -23292.14, "tipo": "FT", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Administrativo", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001085-00000020085", "banco": "Banco Beta", "data": "22/05/2026", "valor": -33786.13, "tipo": "RC", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Litoral Transportes", "centro": "TI", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001086-00000020086", "banco": "Banco Delta", "data": "06/05/2026", "valor": -32891.45, "tipo": "FT", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Litoral Transportes", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001087-00000020087", "banco": "Banco Beta", "data": "26/05/2026", "valor": -39236.39, "tipo": "TED", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Bela Vista Facilities", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001088-00000020088", "banco": "Banco Beta", "data": "03/02/2026", "valor": -17864.68, "tipo": "FOL", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Ondas Telecom", "centro": "RH", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001089-00000020089", "banco": "Banco Alfa", "data": "21/06/2026", "valor": 82208.43, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001090-00000020090", "banco": "Banco Gama", "data": "20/05/2026", "valor": 70992.7, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001091-00000020091", "banco": "Banco Delta", "data": "08/07/2026", "valor": -38782.92, "tipo": "IOF", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001092-00000020092", "banco": "Banco Delta", "data": "22/06/2026", "valor": -33807.07, "tipo": "FT", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Nexus Marketing Digital", "centro": "Administrativo", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001093-00000020093", "banco": "Banco Gama", "data": "15/07/2026", "valor": 72264.48, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001094-00000020094", "banco": "Banco Beta", "data": "30/04/2026", "valor": -35829.36, "tipo": "JR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001095-00000020095", "banco": "Banco Delta", "data": "10/07/2026", "valor": -28995.38, "tipo": "FT", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001096-00000020096", "banco": "Banco Delta", "data": "20/07/2026", "valor": -14022.62, "tipo": "FT", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Cedro Advocacia", "centro": "Operacoes", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001097-00000020097", "banco": "Banco Gama", "data": "11/03/2026", "valor": -16665.99, "tipo": "NF", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Cedro Advocacia", "centro": "TI", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001098-00000020098", "banco": "Banco Delta", "data": "24/03/2026", "valor": -41049.27, "tipo": "TED", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Litoral Transportes", "centro": "RH", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001099-00000020099", "banco": "Banco Beta", "data": "19/04/2026", "valor": -34722.21, "tipo": "NF", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Zenith Softwares", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001100-00000020100", "banco": "Banco Delta", "data": "06/05/2026", "valor": -15240.99, "tipo": "FOL", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Comercial Estrela Azul", "centro": "RH", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001101-00000020101", "banco": "Banco Delta", "data": "29/04/2026", "valor": -41200.96, "tipo": "RD", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Panorama Eventos", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001102-00000020102", "banco": "Banco Delta", "data": "07/06/2026", "valor": -30608.76, "tipo": "RD", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Litoral Transportes", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001103-00000020103", "banco": "Banco Gama", "data": "19/04/2026", "valor": -33906.31, "tipo": "RD", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Bela Vista Facilities", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001104-00000020104", "banco": "Banco Beta", "data": "10/07/2026", "valor": -15297.88, "tipo": "FT", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Zenith Softwares", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001105-00000020105", "banco": "Banco Alfa", "data": "06/07/2026", "valor": -44819.99, "tipo": "IOF", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Nexus Marketing Digital", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001106-00000020106", "banco": "Banco Beta", "data": "06/05/2026", "valor": -19325.4, "tipo": "BOL", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Girassol RH Consultoria", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001107-00000020107", "banco": "Banco Delta", "data": "29/06/2026", "valor": -17177.42, "tipo": "RD", "descricao": "Ondas Telecom", "status": "⚠ Pendente", "tipo_lanc": "RD", "fornecedor": "Ondas Telecom", "centro": "Comercial", "cfxp": "Encargos", "conciliado": false, "pendente": true}, {"id": "001108-00000020108", "banco": "Banco Alfa", "data": "18/07/2026", "valor": -12993.96, "tipo": "BOL", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Litoral Transportes", "centro": "Administrativo", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001109-00000020109", "banco": "Banco Beta", "data": "11/07/2026", "valor": 32015.3, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "RH", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001110-00000020110", "banco": "Banco Beta", "data": "07/03/2026", "valor": -36736.94, "tipo": "JR", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001111-00000020111", "banco": "Banco Beta", "data": "17/04/2026", "valor": -11878.92, "tipo": "FOL", "descricao": "Nexus Marketing Digital", "status": "⚠ Pendente", "tipo_lanc": "FOL", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Salarios", "conciliado": false, "pendente": true}, {"id": "001112-00000020112", "banco": "Banco Beta", "data": "08/05/2026", "valor": -12529.24, "tipo": "IOF", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Cedro Advocacia", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001113-00000020113", "banco": "Banco Beta", "data": "21/07/2026", "valor": -20778.64, "tipo": "IOF", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Bela Vista Facilities", "centro": "Operacoes", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001114-00000020114", "banco": "Banco Delta", "data": "27/05/2026", "valor": 44671.43, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001115-00000020115", "banco": "Banco Beta", "data": "08/07/2026", "valor": 10028.77, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Comercial", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001116-00000020116", "banco": "Banco Gama", "data": "21/02/2026", "valor": -17635.97, "tipo": "JR", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Ondas Telecom", "centro": "TI", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001117-00000020117", "banco": "Banco Beta", "data": "04/03/2026", "valor": -32661.12, "tipo": "TED", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Silvestre Alimentos LTDA", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001118-00000020118", "banco": "Banco Gama", "data": "03/05/2026", "valor": -19662.97, "tipo": "FT", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001119-00000020119", "banco": "Banco Beta", "data": "01/03/2026", "valor": 67275.25, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "RH", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001120-00000020120", "banco": "Banco Gama", "data": "12/02/2026", "valor": -6202.62, "tipo": "NF", "descricao": "Litoral Transportes", "status": "⚠ Pendente", "tipo_lanc": "NF", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Ocupacao", "conciliado": false, "pendente": true}, {"id": "001121-00000020121", "banco": "Banco Beta", "data": "23/06/2026", "valor": -29827.74, "tipo": "RD", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Litoral Transportes", "centro": "RH", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001122-00000020122", "banco": "Banco Alfa", "data": "19/04/2026", "valor": -38155.86, "tipo": "NF", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Bela Vista Facilities", "centro": "Administrativo", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001123-00000020123", "banco": "Banco Delta", "data": "11/04/2026", "valor": -39247.93, "tipo": "NF", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001124-00000020124", "banco": "Banco Gama", "data": "01/06/2026", "valor": -14574.37, "tipo": "JR", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Panorama Eventos", "centro": "Comercial", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001125-00000020125", "banco": "Banco Delta", "data": "29/01/2026", "valor": 10097.59, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001126-00000020126", "banco": "Banco Delta", "data": "02/06/2026", "valor": -5830.73, "tipo": "JR", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Nexus Marketing Digital", "centro": "TI", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001127-00000020127", "banco": "Banco Beta", "data": "13/06/2026", "valor": -3221.36, "tipo": "FOL", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001128-00000020128", "banco": "Banco Beta", "data": "05/04/2026", "valor": -6510.01, "tipo": "RD", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001129-00000020129", "banco": "Banco Gama", "data": "19/05/2026", "valor": 83141.13, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "RH", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001130-00000020130", "banco": "Banco Gama", "data": "20/05/2026", "valor": -18702.43, "tipo": "FT", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Comercial Estrela Azul", "centro": "Operacoes", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001131-00000020131", "banco": "Banco Delta", "data": "13/02/2026", "valor": -23959.14, "tipo": "RD", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Litoral Transportes", "centro": "Administrativo", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001132-00000020132", "banco": "Banco Gama", "data": "01/05/2026", "valor": -23339.88, "tipo": "TED", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001133-00000020133", "banco": "Banco Delta", "data": "26/02/2026", "valor": -4130.61, "tipo": "JR", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Ondas Telecom", "centro": "TI", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001134-00000020134", "banco": "Banco Gama", "data": "04/08/2026", "valor": -15085.8, "tipo": "BOL", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001135-00000020135", "banco": "Banco Gama", "data": "23/05/2026", "valor": -23224.29, "tipo": "NF", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Ondas Telecom", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001136-00000020136", "banco": "Banco Delta", "data": "13/05/2026", "valor": -27983.37, "tipo": "IOF", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Ondas Telecom", "centro": "Comercial", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001137-00000020137", "banco": "Banco Beta", "data": "06/06/2026", "valor": -21822.8, "tipo": "BOL", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Operacoes", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001138-00000020138", "banco": "Banco Delta", "data": "12/07/2026", "valor": 64563.09, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "RH", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001139-00000020139", "banco": "Banco Gama", "data": "11/06/2026", "valor": -18867.61, "tipo": "NF", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Zenith Softwares", "centro": "Operacoes", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001140-00000020140", "banco": "Banco Beta", "data": "08/02/2026", "valor": -32789.03, "tipo": "JR", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Prisma Consultoria Financeira", "centro": "Administrativo", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001141-00000020141", "banco": "Banco Alfa", "data": "18/04/2026", "valor": -6499.66, "tipo": "TAR", "descricao": "Vintage Papelaria e Suprimentos", "status": "⚠ Pendente", "tipo_lanc": "TAR", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Despesas Financeiras", "conciliado": false, "pendente": true}, {"id": "001142-00000020142", "banco": "Banco Delta", "data": "07/03/2026", "valor": -4930.62, "tipo": "NF", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Operacoes", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001143-00000020143", "banco": "Banco Beta", "data": "04/04/2026", "valor": -9286.63, "tipo": "RC", "descricao": "Comercial Estrela Azul", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Comercial Estrela Azul", "centro": "Comercial", "cfxp": "Marketing", "conciliado": false, "pendente": true}, {"id": "001144-00000020144", "banco": "Banco Beta", "data": "15/06/2026", "valor": -30057.27, "tipo": "FOL", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Bela Vista Facilities", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001145-00000020145", "banco": "Banco Alfa", "data": "25/03/2026", "valor": -32676.29, "tipo": "TED", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Silvestre Alimentos LTDA", "centro": "TI", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001146-00000020146", "banco": "Banco Delta", "data": "25/06/2026", "valor": -14478.48, "tipo": "RD", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Girassol RH Consultoria", "centro": "RH", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001147-00000020147", "banco": "Banco Beta", "data": "17/05/2026", "valor": -43509.05, "tipo": "FOL", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Panorama Eventos", "centro": "Operacoes", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001148-00000020148", "banco": "Banco Alfa", "data": "12/02/2026", "valor": -32243.92, "tipo": "FOL", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001149-00000020149", "banco": "Banco Delta", "data": "03/06/2026", "valor": 82213.93, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001150-00000020150", "banco": "Banco Gama", "data": "31/01/2026", "valor": -44758.02, "tipo": "RD", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Grupo Horizonte Logística", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001151-00000020151", "banco": "Banco Delta", "data": "30/07/2026", "valor": -41348.91, "tipo": "FT", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Cedro Advocacia", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001152-00000020152", "banco": "Banco Beta", "data": "16/06/2026", "valor": 21761.96, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "RH", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001153-00000020153", "banco": "Banco Alfa", "data": "01/08/2026", "valor": -14110.88, "tipo": "JR", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Grupo Horizonte Logística", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001154-00000020154", "banco": "Banco Beta", "data": "30/01/2026", "valor": -28732.41, "tipo": "RC", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cedro Advocacia", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001155-00000020155", "banco": "Banco Gama", "data": "31/01/2026", "valor": -30335.1, "tipo": "IOF", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Nexus Marketing Digital", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001156-00000020156", "banco": "Banco Gama", "data": "06/06/2026", "valor": 36658.67, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001157-00000020157", "banco": "Banco Gama", "data": "25/01/2026", "valor": -28568.96, "tipo": "RD", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Comercial Estrela Azul", "centro": "RH", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001158-00000020158", "banco": "Banco Beta", "data": "05/05/2026", "valor": -21951.08, "tipo": "BOL", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Panorama Eventos", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001159-00000020159", "banco": "Banco Delta", "data": "27/01/2026", "valor": -42055, "tipo": "FT", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001160-00000020160", "banco": "Banco Gama", "data": "12/02/2026", "valor": -39068.28, "tipo": "RD", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "TI", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001161-00000020161", "banco": "Banco Delta", "data": "16/05/2026", "valor": -22732.18, "tipo": "RC", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001162-00000020162", "banco": "Banco Gama", "data": "30/07/2026", "valor": -24909.97, "tipo": "RD", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Nexus Marketing Digital", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001163-00000020163", "banco": "Banco Alfa", "data": "13/04/2026", "valor": -16338.38, "tipo": "JR", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Cedro Advocacia", "centro": "TI", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001164-00000020164", "banco": "Banco Delta", "data": "10/04/2026", "valor": -30466.33, "tipo": "FOL", "descricao": "Prisma Consultoria Financeira", "status": "⚠ Pendente", "tipo_lanc": "FOL", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": false, "pendente": true}, {"id": "001165-00000020165", "banco": "Banco Gama", "data": "15/03/2026", "valor": 8849.3, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001166-00000020166", "banco": "Banco Gama", "data": "20/05/2026", "valor": -42738, "tipo": "JR", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Ondas Telecom", "centro": "Administrativo", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001167-00000020167", "banco": "Banco Beta", "data": "08/06/2026", "valor": -1945.37, "tipo": "TAR", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Ondas Telecom", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001168-00000020168", "banco": "Banco Delta", "data": "20/02/2026", "valor": -13422.5, "tipo": "FOL", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Grupo Horizonte Logística", "centro": "Comercial", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001169-00000020169", "banco": "Banco Gama", "data": "11/05/2026", "valor": -43566.21, "tipo": "BOL", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Zenith Softwares", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001170-00000020170", "banco": "Banco Gama", "data": "05/06/2026", "valor": -28986.34, "tipo": "BOL", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001171-00000020171", "banco": "Banco Beta", "data": "19/02/2026", "valor": -17105.87, "tipo": "BOL", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Bela Vista Facilities", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001172-00000020172", "banco": "Banco Alfa", "data": "15/05/2026", "valor": -37191.6, "tipo": "BOL", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001173-00000020173", "banco": "Banco Beta", "data": "29/05/2026", "valor": -29078.89, "tipo": "TAR", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Panorama Eventos", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001174-00000020174", "banco": "Banco Beta", "data": "18/02/2026", "valor": -15061.61, "tipo": "RC", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001175-00000020175", "banco": "Banco Alfa", "data": "23/03/2026", "valor": -14184.85, "tipo": "JR", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Fenix Segurança Patrimonial", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001176-00000020176", "banco": "Banco Alfa", "data": "26/02/2026", "valor": -38039.83, "tipo": "BOL", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Litoral Transportes", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001177-00000020177", "banco": "Banco Alfa", "data": "20/07/2026", "valor": -19213.14, "tipo": "RC", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Ondas Telecom", "centro": "Operacoes", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001178-00000020178", "banco": "Banco Alfa", "data": "23/05/2026", "valor": -4025.41, "tipo": "TAR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001179-00000020179", "banco": "Banco Gama", "data": "13/05/2026", "valor": -14913.78, "tipo": "RD", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001180-00000020180", "banco": "Banco Alfa", "data": "06/06/2026", "valor": -11758.01, "tipo": "TAR", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Aurora Tecnologia LTDA", "centro": "RH", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001181-00000020181", "banco": "Banco Gama", "data": "04/05/2026", "valor": -42071.82, "tipo": "FT", "descricao": "Grupo Horizonte Logística", "status": "⚠ Pendente", "tipo_lanc": "FT", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": false, "pendente": true}, {"id": "001182-00000020182", "banco": "Banco Delta", "data": "25/05/2026", "valor": 85235.25, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001183-00000020183", "banco": "Banco Delta", "data": "22/03/2026", "valor": -39799.4, "tipo": "NF", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001184-00000020184", "banco": "Banco Delta", "data": "07/05/2026", "valor": -16974.43, "tipo": "IOF", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Administrativo", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001185-00000020185", "banco": "Banco Alfa", "data": "30/04/2026", "valor": -13163.65, "tipo": "TAR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Comercial Estrela Azul", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001186-00000020186", "banco": "Banco Delta", "data": "23/04/2026", "valor": -27428.86, "tipo": "NF", "descricao": "Fenix Segurança Patrimonial", "status": "⚠ Pendente", "tipo_lanc": "NF", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Salarios", "conciliado": false, "pendente": true}, {"id": "001187-00000020187", "banco": "Banco Beta", "data": "09/03/2026", "valor": -27596.72, "tipo": "RD", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Prisma Consultoria Financeira", "centro": "Administrativo", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001188-00000020188", "banco": "Banco Delta", "data": "09/05/2026", "valor": -37410.39, "tipo": "RC", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cedro Advocacia", "centro": "TI", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001189-00000020189", "banco": "Banco Alfa", "data": "23/01/2026", "valor": -14399.36, "tipo": "RC", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Bela Vista Facilities", "centro": "RH", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001190-00000020190", "banco": "Banco Delta", "data": "15/06/2026", "valor": -28602.92, "tipo": "NF", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Comercial Estrela Azul", "centro": "RH", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001191-00000020191", "banco": "Banco Beta", "data": "12/07/2026", "valor": -19052.84, "tipo": "JR", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Silvestre Alimentos LTDA", "centro": "TI", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001192-00000020192", "banco": "Banco Delta", "data": "08/08/2026", "valor": -15167.19, "tipo": "RD", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001193-00000020193", "banco": "Banco Gama", "data": "07/06/2026", "valor": -30888.97, "tipo": "TED", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Bela Vista Facilities", "centro": "Administrativo", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001194-00000020194", "banco": "Banco Delta", "data": "08/04/2026", "valor": -9961.68, "tipo": "RD", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Prisma Consultoria Financeira", "centro": "RH", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001195-00000020195", "banco": "Banco Delta", "data": "23/07/2026", "valor": -40392.61, "tipo": "FOL", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001196-00000020196", "banco": "Banco Gama", "data": "29/01/2026", "valor": 83388.84, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001197-00000020197", "banco": "Banco Alfa", "data": "11/03/2026", "valor": -12805.67, "tipo": "TED", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Bela Vista Facilities", "centro": "Administrativo", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001198-00000020198", "banco": "Banco Delta", "data": "12/02/2026", "valor": -3120.11, "tipo": "BOL", "descricao": "Prisma Consultoria Financeira", "status": "⚠ Pendente", "tipo_lanc": "BOL", "fornecedor": "Prisma Consultoria Financeira", "centro": "Administrativo", "cfxp": "Intermediacao / Custas", "conciliado": false, "pendente": true}, {"id": "001199-00000020199", "banco": "Banco Beta", "data": "09/02/2026", "valor": -21903.22, "tipo": "RD", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Panorama Eventos", "centro": "Operacoes", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001200-00000020200", "banco": "Banco Alfa", "data": "25/06/2026", "valor": 52949.6, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001201-00000020201", "banco": "Banco Beta", "data": "22/05/2026", "valor": -35627.86, "tipo": "NF", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Girassol RH Consultoria", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001202-00000020202", "banco": "Banco Delta", "data": "14/04/2026", "valor": -24813.88, "tipo": "IOF", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Girassol RH Consultoria", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001203-00000020203", "banco": "Banco Beta", "data": "26/03/2026", "valor": -29454.21, "tipo": "RC", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Aurora Tecnologia LTDA", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001204-00000020204", "banco": "Banco Gama", "data": "27/07/2026", "valor": -37352.95, "tipo": "BOL", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Nexus Marketing Digital", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001205-00000020205", "banco": "Banco Delta", "data": "28/02/2026", "valor": 36370.97, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001206-00000020206", "banco": "Banco Beta", "data": "15/04/2026", "valor": 59870.45, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Comercial", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001207-00000020207", "banco": "Banco Gama", "data": "01/07/2026", "valor": -41601.29, "tipo": "RC", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cedro Advocacia", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001208-00000020208", "banco": "Banco Gama", "data": "22/06/2026", "valor": -33849.88, "tipo": "FT", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001209-00000020209", "banco": "Banco Alfa", "data": "24/07/2026", "valor": -39392.57, "tipo": "IOF", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Operacoes", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001210-00000020210", "banco": "Banco Beta", "data": "25/02/2026", "valor": -9735.33, "tipo": "IOF", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001211-00000020211", "banco": "Banco Alfa", "data": "03/03/2026", "valor": -20490.33, "tipo": "IOF", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Ondas Telecom", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001212-00000020212", "banco": "Banco Delta", "data": "25/05/2026", "valor": -32768.98, "tipo": "TED", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "RH", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001213-00000020213", "banco": "Banco Alfa", "data": "01/02/2026", "valor": 89488.76, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001214-00000020214", "banco": "Banco Delta", "data": "26/01/2026", "valor": -29347.93, "tipo": "FT", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Prisma Consultoria Financeira", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001215-00000020215", "banco": "Banco Gama", "data": "21/04/2026", "valor": -29686.21, "tipo": "IOF", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Nexus Marketing Digital", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001216-00000020216", "banco": "Banco Delta", "data": "28/05/2026", "valor": -44049.29, "tipo": "TAR", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Zenith Softwares", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001217-00000020217", "banco": "Banco Alfa", "data": "14/05/2026", "valor": -9130.84, "tipo": "JR", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001218-00000020218", "banco": "Banco Alfa", "data": "20/03/2026", "valor": 55007.29, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001219-00000020219", "banco": "Banco Gama", "data": "18/07/2026", "valor": -6993.99, "tipo": "RD", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001220-00000020220", "banco": "Banco Beta", "data": "06/07/2026", "valor": -44367.74, "tipo": "RC", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001221-00000020221", "banco": "Banco Delta", "data": "04/07/2026", "valor": -30800.76, "tipo": "TAR", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Aurora Tecnologia LTDA", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001222-00000020222", "banco": "Banco Delta", "data": "22/04/2026", "valor": -34145.19, "tipo": "RC", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Grupo Horizonte Logística", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001223-00000020223", "banco": "Banco Delta", "data": "07/06/2026", "valor": -24225.64, "tipo": "TED", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Grupo Horizonte Logística", "centro": "Operacoes", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001224-00000020224", "banco": "Banco Beta", "data": "26/06/2026", "valor": -24475.09, "tipo": "TAR", "descricao": "Aurora Tecnologia LTDA", "status": "⚠ Pendente", "tipo_lanc": "TAR", "fornecedor": "Aurora Tecnologia LTDA", "centro": "RH", "cfxp": "Beneficios", "conciliado": false, "pendente": true}, {"id": "001225-00000020225", "banco": "Banco Beta", "data": "13/06/2026", "valor": -32814.29, "tipo": "RD", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Ondas Telecom", "centro": "Operacoes", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001226-00000020226", "banco": "Banco Delta", "data": "19/01/2026", "valor": -33812.06, "tipo": "JR", "descricao": "Girassol RH Consultoria", "status": "⚠ Pendente", "tipo_lanc": "JR", "fornecedor": "Girassol RH Consultoria", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": false, "pendente": true}, {"id": "001227-00000020227", "banco": "Banco Gama", "data": "20/05/2026", "valor": -21408.27, "tipo": "RD", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "RH", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001228-00000020228", "banco": "Banco Gama", "data": "03/06/2026", "valor": -41213.41, "tipo": "NF", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Prisma Consultoria Financeira", "centro": "RH", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001229-00000020229", "banco": "Banco Delta", "data": "30/03/2026", "valor": -26398.12, "tipo": "TED", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001230-00000020230", "banco": "Banco Gama", "data": "20/03/2026", "valor": -42501.13, "tipo": "FT", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001231-00000020231", "banco": "Banco Alfa", "data": "16/03/2026", "valor": -22383.58, "tipo": "BOL", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001232-00000020232", "banco": "Banco Beta", "data": "27/01/2026", "valor": -7475.51, "tipo": "RD", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001233-00000020233", "banco": "Banco Alfa", "data": "09/07/2026", "valor": -22363.16, "tipo": "TAR", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Fenix Segurança Patrimonial", "centro": "Comercial", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001234-00000020234", "banco": "Banco Delta", "data": "01/02/2026", "valor": -22997.95, "tipo": "BOL", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Panorama Eventos", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001235-00000020235", "banco": "Banco Delta", "data": "30/05/2026", "valor": -12615.75, "tipo": "TAR", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Nexus Marketing Digital", "centro": "TI", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001236-00000020236", "banco": "Banco Alfa", "data": "10/06/2026", "valor": -37400.34, "tipo": "BOL", "descricao": "Zenith Softwares", "status": "⚠ Pendente", "tipo_lanc": "BOL", "fornecedor": "Zenith Softwares", "centro": "TI", "cfxp": "Salarios", "conciliado": false, "pendente": true}, {"id": "001237-00000020237", "banco": "Banco Delta", "data": "27/04/2026", "valor": -8375.15, "tipo": "RD", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Litoral Transportes", "centro": "RH", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001238-00000020238", "banco": "Banco Delta", "data": "01/03/2026", "valor": -40029.9, "tipo": "BOL", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001239-00000020239", "banco": "Banco Beta", "data": "15/06/2026", "valor": -1492.09, "tipo": "TAR", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Bela Vista Facilities", "centro": "Comercial", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001240-00000020240", "banco": "Banco Gama", "data": "03/04/2026", "valor": -30724.95, "tipo": "BOL", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001241-00000020241", "banco": "Banco Delta", "data": "31/07/2026", "valor": -15854.2, "tipo": "NF", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Panorama Eventos", "centro": "Operacoes", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001242-00000020242", "banco": "Banco Delta", "data": "22/05/2026", "valor": -9009.61, "tipo": "RC", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Nexus Marketing Digital", "centro": "Administrativo", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001243-00000020243", "banco": "Banco Delta", "data": "12/07/2026", "valor": -7619.04, "tipo": "BOL", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001244-00000020244", "banco": "Banco Beta", "data": "10/02/2026", "valor": -6656.81, "tipo": "IOF", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001245-00000020245", "banco": "Banco Gama", "data": "01/06/2026", "valor": -27184.07, "tipo": "NF", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001246-00000020246", "banco": "Banco Beta", "data": "10/05/2026", "valor": -26080.65, "tipo": "FOL", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Zenith Softwares", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001247-00000020247", "banco": "Banco Delta", "data": "27/03/2026", "valor": 40816.84, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001248-00000020248", "banco": "Banco Beta", "data": "07/06/2026", "valor": -28426.49, "tipo": "FOL", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Ondas Telecom", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001249-00000020249", "banco": "Banco Delta", "data": "12/02/2026", "valor": -20257.85, "tipo": "FOL", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001250-00000020250", "banco": "Banco Delta", "data": "21/04/2026", "valor": -8651.57, "tipo": "FT", "descricao": "Prisma Consultoria Financeira", "status": "⚠ Pendente", "tipo_lanc": "FT", "fornecedor": "Prisma Consultoria Financeira", "centro": "RH", "cfxp": "Beneficios", "conciliado": false, "pendente": true}, {"id": "001251-00000020251", "banco": "Banco Beta", "data": "24/03/2026", "valor": -9631.16, "tipo": "NF", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Zenith Softwares", "centro": "TI", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001252-00000020252", "banco": "Banco Delta", "data": "16/07/2026", "valor": -36998.28, "tipo": "FOL", "descricao": "Zenith Softwares", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Zenith Softwares", "centro": "Operacoes", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001253-00000020253", "banco": "Banco Delta", "data": "23/03/2026", "valor": -4069.26, "tipo": "IOF", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Bela Vista Facilities", "centro": "RH", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001254-00000020254", "banco": "Banco Alfa", "data": "19/07/2026", "valor": -27046.84, "tipo": "RD", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Nexus Marketing Digital", "centro": "Administrativo", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001255-00000020255", "banco": "Banco Gama", "data": "16/07/2026", "valor": -43533.05, "tipo": "BOL", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Panorama Eventos", "centro": "Comercial", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001256-00000020256", "banco": "Banco Beta", "data": "15/02/2026", "valor": -31194.77, "tipo": "TAR", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Ondas Telecom", "centro": "TI", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001257-00000020257", "banco": "Banco Gama", "data": "19/07/2026", "valor": -22138.48, "tipo": "BOL", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Administrativo", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001258-00000020258", "banco": "Banco Delta", "data": "17/04/2026", "valor": -21846.38, "tipo": "RD", "descricao": "Cedro Advocacia", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Cedro Advocacia", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001259-00000020259", "banco": "Banco Alfa", "data": "26/03/2026", "valor": 32847.78, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001260-00000020260", "banco": "Banco Delta", "data": "27/07/2026", "valor": -19645.53, "tipo": "FOL", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Grupo Horizonte Logística", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001261-00000020261", "banco": "Banco Delta", "data": "11/07/2026", "valor": -20671.22, "tipo": "TED", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Administrativo", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001262-00000020262", "banco": "Banco Gama", "data": "13/04/2026", "valor": -9063.62, "tipo": "BOL", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Grupo Horizonte Logística", "centro": "Operacoes", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001263-00000020263", "banco": "Banco Alfa", "data": "30/07/2026", "valor": -27819.83, "tipo": "FT", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Prisma Consultoria Financeira", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001264-00000020264", "banco": "Banco Beta", "data": "21/03/2026", "valor": -4546.04, "tipo": "TED", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Prisma Consultoria Financeira", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001265-00000020265", "banco": "Banco Delta", "data": "12/02/2026", "valor": -27162.02, "tipo": "FT", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001266-00000020266", "banco": "Banco Beta", "data": "03/08/2026", "valor": -13566.5, "tipo": "JR", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001267-00000020267", "banco": "Banco Delta", "data": "10/05/2026", "valor": -43401.25, "tipo": "TAR", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Silvestre Alimentos LTDA", "centro": "TI", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001268-00000020268", "banco": "Banco Gama", "data": "18/05/2026", "valor": -13710.37, "tipo": "RC", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Grupo Horizonte Logística", "centro": "Administrativo", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001269-00000020269", "banco": "Banco Gama", "data": "26/05/2026", "valor": -26113.96, "tipo": "RD", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Panorama Eventos", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001270-00000020270", "banco": "Banco Beta", "data": "15/02/2026", "valor": -5326.81, "tipo": "FT", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Operacoes", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001271-00000020271", "banco": "Banco Beta", "data": "07/05/2026", "valor": -35082.92, "tipo": "RD", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "RD", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Impostos s/ Receita", "conciliado": true, "pendente": false}, {"id": "001272-00000020272", "banco": "Banco Gama", "data": "02/07/2026", "valor": -36400.47, "tipo": "JR", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Fenix Segurança Patrimonial", "centro": "RH", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001273-00000020273", "banco": "Banco Alfa", "data": "04/03/2026", "valor": -12616.56, "tipo": "NF", "descricao": "Comercial Estrela Azul", "status": "⚠ Pendente", "tipo_lanc": "NF", "fornecedor": "Comercial Estrela Azul", "centro": "Operacoes", "cfxp": "Ocupacao", "conciliado": false, "pendente": true}, {"id": "001274-00000020274", "banco": "Banco Beta", "data": "29/06/2026", "valor": -15036.67, "tipo": "FT", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Panorama Eventos", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001275-00000020275", "banco": "Banco Alfa", "data": "27/06/2026", "valor": -28806.35, "tipo": "RC", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Operacoes", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001276-00000020276", "banco": "Banco Alfa", "data": "07/06/2026", "valor": 70349.77, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001277-00000020277", "banco": "Banco Delta", "data": "10/07/2026", "valor": -10428.08, "tipo": "FT", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001278-00000020278", "banco": "Banco Gama", "data": "30/04/2026", "valor": -38477.08, "tipo": "NF", "descricao": "Girassol RH Consultoria", "status": "✅ Conciliado", "tipo_lanc": "NF", "fornecedor": "Girassol RH Consultoria", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001279-00000020279", "banco": "Banco Alfa", "data": "12/07/2026", "valor": -20304.84, "tipo": "FOL", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Operacoes", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001280-00000020280", "banco": "Banco Alfa", "data": "18/03/2026", "valor": -16731.24, "tipo": "NF", "descricao": "Prisma Consultoria Financeira", "status": "⚠ Pendente", "tipo_lanc": "NF", "fornecedor": "Prisma Consultoria Financeira", "centro": "TI", "cfxp": "Despesas Gerais", "conciliado": false, "pendente": true}, {"id": "001281-00000020281", "banco": "Banco Alfa", "data": "27/06/2026", "valor": -31903.45, "tipo": "BOL", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Grupo Horizonte Logística", "centro": "Administrativo", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001282-00000020282", "banco": "Banco Alfa", "data": "18/06/2026", "valor": 63516.95, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001283-00000020283", "banco": "Banco Alfa", "data": "09/07/2026", "valor": -36423.29, "tipo": "RC", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Prisma Consultoria Financeira", "centro": "Administrativo", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001284-00000020284", "banco": "Banco Alfa", "data": "10/05/2026", "valor": -7114.11, "tipo": "FT", "descricao": "Bela Vista Facilities", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Bela Vista Facilities", "centro": "Operacoes", "cfxp": "Despesas Gerais", "conciliado": true, "pendente": false}, {"id": "001285-00000020285", "banco": "Banco Beta", "data": "18/07/2026", "valor": -31146.22, "tipo": "FOL", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001286-00000020286", "banco": "Banco Alfa", "data": "03/07/2026", "valor": -11752.16, "tipo": "JR", "descricao": "Grupo Horizonte Logística", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Grupo Horizonte Logística", "centro": "RH", "cfxp": "Despesas Financeiras", "conciliado": true, "pendente": false}, {"id": "001287-00000020287", "banco": "Banco Gama", "data": "04/08/2026", "valor": 76695.09, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Administrativo", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001288-00000020288", "banco": "Banco Beta", "data": "13/06/2026", "valor": -3211.96, "tipo": "BOL", "descricao": "Ondas Telecom", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Ondas Telecom", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001289-00000020289", "banco": "Banco Gama", "data": "08/06/2026", "valor": -44420.21, "tipo": "JR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001290-00000020290", "banco": "Banco Alfa", "data": "01/05/2026", "valor": -1537.67, "tipo": "TED", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Aurora Tecnologia LTDA", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001291-00000020291", "banco": "Banco Delta", "data": "26/02/2026", "valor": -22946.36, "tipo": "BOL", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Silvestre Alimentos LTDA", "centro": "RH", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001292-00000020292", "banco": "Banco Beta", "data": "13/06/2026", "valor": -41504.88, "tipo": "TAR", "descricao": "Fenix Segurança Patrimonial", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Fenix Segurança Patrimonial", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001293-00000020293", "banco": "Banco Beta", "data": "18/07/2026", "valor": -31681.47, "tipo": "BOL", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Aurora Tecnologia LTDA", "centro": "TI", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001294-00000020294", "banco": "Banco Beta", "data": "20/02/2026", "valor": -29885.91, "tipo": "FOL", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001295-00000020295", "banco": "Banco Gama", "data": "07/03/2026", "valor": -12258.72, "tipo": "BOL", "descricao": "Comercial Estrela Azul", "status": "⚠ Pendente", "tipo_lanc": "BOL", "fornecedor": "Comercial Estrela Azul", "centro": "Comercial", "cfxp": "Beneficios", "conciliado": false, "pendente": true}, {"id": "001296-00000020296", "banco": "Banco Alfa", "data": "02/05/2026", "valor": 64972.12, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001297-00000020297", "banco": "Banco Gama", "data": "23/05/2026", "valor": -17051.8, "tipo": "JR", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "JR", "fornecedor": "Panorama Eventos", "centro": "Comercial", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001298-00000020298", "banco": "Banco Delta", "data": "30/03/2026", "valor": -11609.17, "tipo": "FOL", "descricao": "Prisma Consultoria Financeira", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Prisma Consultoria Financeira", "centro": "Administrativo", "cfxp": "Ocupacao", "conciliado": true, "pendente": false}, {"id": "001299-00000020299", "banco": "Banco Beta", "data": "08/02/2026", "valor": -10723.58, "tipo": "RC", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Comercial", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001300-00000020300", "banco": "Banco Alfa", "data": "19/06/2026", "valor": -10664.78, "tipo": "FT", "descricao": "Silvestre Alimentos LTDA", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Silvestre Alimentos LTDA", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001301-00000020301", "banco": "Banco Gama", "data": "10/04/2026", "valor": 20458.39, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "RH", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001302-00000020302", "banco": "Banco Beta", "data": "28/03/2026", "valor": -33174.88, "tipo": "TAR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Comercial Estrela Azul", "centro": "Comercial", "cfxp": "Salarios", "conciliado": true, "pendente": false}, {"id": "001303-00000020303", "banco": "Banco Delta", "data": "30/03/2026", "valor": -864.62, "tipo": "BOL", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Litoral Transportes", "centro": "Administrativo", "cfxp": "Beneficios", "conciliado": true, "pendente": false}, {"id": "001304-00000020304", "banco": "Banco Alfa", "data": "30/05/2026", "valor": -32255.04, "tipo": "IOF", "descricao": "Aurora Tecnologia LTDA", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Aurora Tecnologia LTDA", "centro": "TI", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001305-00000020305", "banco": "Banco Beta", "data": "08/08/2026", "valor": 11315.2, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001306-00000020306", "banco": "Banco Gama", "data": "17/02/2026", "valor": -11265.31, "tipo": "TAR", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Litoral Transportes", "centro": "Operacoes", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001307-00000020307", "banco": "Banco Alfa", "data": "13/04/2026", "valor": -35273.21, "tipo": "FOL", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "FOL", "fornecedor": "Comercial Estrela Azul", "centro": "TI", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001308-00000020308", "banco": "Banco Delta", "data": "21/05/2026", "valor": -20774.73, "tipo": "BOL", "descricao": "Vintage Papelaria e Suprimentos", "status": "✅ Conciliado", "tipo_lanc": "BOL", "fornecedor": "Vintage Papelaria e Suprimentos", "centro": "Administrativo", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001309-00000020309", "banco": "Banco Gama", "data": "16/07/2026", "valor": -37747.87, "tipo": "TED", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Comercial Estrela Azul", "centro": "Operacoes", "cfxp": "Marketing", "conciliado": true, "pendente": false}, {"id": "001310-00000020310", "banco": "Banco Delta", "data": "07/05/2026", "valor": -2173.83, "tipo": "IOF", "descricao": "Litoral Transportes", "status": "✅ Conciliado", "tipo_lanc": "IOF", "fornecedor": "Litoral Transportes", "centro": "RH", "cfxp": "Intermediacao / Custas", "conciliado": true, "pendente": false}, {"id": "001311-00000020311", "banco": "Banco Beta", "data": "16/03/2026", "valor": -37502.46, "tipo": "TAR", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TAR", "fornecedor": "Comercial Estrela Azul", "centro": "Operacoes", "cfxp": "Encargos", "conciliado": true, "pendente": false}, {"id": "001312-00000020312", "banco": "Banco Alfa", "data": "24/07/2026", "valor": 53992.33, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "⚠ Pendente", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Comercial", "cfxp": "Receita Servicos", "conciliado": false, "pendente": true}, {"id": "001313-00000020313", "banco": "Banco Gama", "data": "01/02/2026", "valor": -4865.46, "tipo": "FT", "descricao": "Nexus Marketing Digital", "status": "⚠ Pendente", "tipo_lanc": "FT", "fornecedor": "Nexus Marketing Digital", "centro": "Comercial", "cfxp": "Salarios", "conciliado": false, "pendente": true}, {"id": "001314-00000020314", "banco": "Banco Delta", "data": "26/03/2026", "valor": -17716.64, "tipo": "TED", "descricao": "Comercial Estrela Azul", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Comercial Estrela Azul", "centro": "Administrativo", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001315-00000020315", "banco": "Banco Beta", "data": "28/03/2026", "valor": 56868.36, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "Operacoes", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001316-00000020316", "banco": "Banco Beta", "data": "31/05/2026", "valor": 27340.51, "tipo": "RC", "descricao": "Cliente Corporativo", "status": "✅ Conciliado", "tipo_lanc": "RC", "fornecedor": "Cliente Corporativo", "centro": "TI", "cfxp": "Receita Servicos", "conciliado": true, "pendente": false}, {"id": "001317-00000020317", "banco": "Banco Delta", "data": "24/03/2026", "valor": -35932.2, "tipo": "FT", "descricao": "Panorama Eventos", "status": "✅ Conciliado", "tipo_lanc": "FT", "fornecedor": "Panorama Eventos", "centro": "RH", "cfxp": "Softwares", "conciliado": true, "pendente": false}, {"id": "001318-00000020318", "banco": "Banco Alfa", "data": "25/05/2026", "valor": -12753.26, "tipo": "TED", "descricao": "Prisma Consultoria Financeira", "status": "⚠ Pendente", "tipo_lanc": "TED", "fornecedor": "Prisma Consultoria Financeira", "centro": "Comercial", "cfxp": "Impostos s/ Receita", "conciliado": false, "pendente": true}, {"id": "001319-00000020319", "banco": "Banco Beta", "data": "24/03/2026", "valor": -44982.57, "tipo": "TED", "descricao": "Nexus Marketing Digital", "status": "✅ Conciliado", "tipo_lanc": "TED", "fornecedor": "Nexus Marketing Digital", "centro": "Operacoes", "cfxp": "Encargos", "conciliado": true, "pendente": false}], "fluxo": [{"data": "23/01/2026", "label": "23/01", "entradas": 0, "saidas": 47961.770000000004, "total": 5442908.860000001}, {"data": "25/01/2026", "label": "25/01", "entradas": 0, "saidas": 32515.11, "total": 5410393.750000001}, {"data": "26/01/2026", "label": "26/01", "entradas": 0, "saidas": 29347.93, "total": 5381045.820000001}, {"data": "27/01/2026", "label": "27/01", "entradas": 0, "saidas": 49530.51, "total": 5331515.3100000005}, {"data": "29/01/2026", "label": "29/01", "entradas": 10097.59, "saidas": 0, "total": 5341612.9}, {"data": "30/01/2026", "label": "30/01", "entradas": 0, "saidas": 28732.41, "total": 5312880.490000001}, {"data": "31/01/2026", "label": "31/01", "entradas": 0, "saidas": 75093.12, "total": 5237787.370000001}, {"data": "01/02/2026", "label": "01/02", "entradas": 89488.76, "saidas": 22997.95, "total": 5304278.180000001}, {"data": "03/02/2026", "label": "03/02", "entradas": 0, "saidas": 17864.68, "total": 5286413.500000001}, {"data": "06/02/2026", "label": "06/02", "entradas": 0, "saidas": 43536.5, "total": 5242877.000000001}, {"data": "07/02/2026", "label": "07/02", "entradas": 0, "saidas": 54237.24, "total": 5188639.760000001}, {"data": "08/02/2026", "label": "08/02", "entradas": 0, "saidas": 113684, "total": 5074955.760000001}, {"data": "09/02/2026", "label": "09/02", "entradas": 0, "saidas": 21903.22, "total": 5053052.540000001}, {"data": "10/02/2026", "label": "10/02", "entradas": 20298.88, "saidas": 16598.89, "total": 5056752.530000001}, {"data": "12/02/2026", "label": "12/02", "entradas": 82442.84, "saidas": 118732.06999999999, "total": 5020463.300000001}, {"data": "13/02/2026", "label": "13/02", "entradas": 0, "saidas": 23959.14, "total": 4996504.160000001}, {"data": "14/02/2026", "label": "14/02", "entradas": 0, "saidas": 11682.72, "total": 4984821.440000001}, {"data": "15/02/2026", "label": "15/02", "entradas": 0, "saidas": 77958.49, "total": 4906862.950000001}, {"data": "16/02/2026", "label": "16/02", "entradas": 0, "saidas": 22255.32, "total": 4884607.630000001}, {"data": "17/02/2026", "label": "17/02", "entradas": 0, "saidas": 11265.31, "total": 4873342.320000001}, {"data": "18/02/2026", "label": "18/02", "entradas": 0, "saidas": 15061.61, "total": 4858280.710000001}, {"data": "19/02/2026", "label": "19/02", "entradas": 0, "saidas": 28972.129999999997, "total": 4829308.580000001}, {"data": "20/02/2026", "label": "20/02", "entradas": 0, "saidas": 64102.53999999999, "total": 4765206.040000001}, {"data": "21/02/2026", "label": "21/02", "entradas": 0, "saidas": 17635.97, "total": 4747570.070000001}, {"data": "25/02/2026", "label": "25/02", "entradas": 0, "saidas": 9735.33, "total": 4737834.740000001}, {"data": "26/02/2026", "label": "26/02", "entradas": 0, "saidas": 80834.32, "total": 4657000.420000001}, {"data": "28/02/2026", "label": "28/02", "entradas": 36370.97, "saidas": 0, "total": 4693371.390000001}, {"data": "01/03/2026", "label": "01/03", "entradas": 67275.25, "saidas": 40029.9, "total": 4720616.740000001}, {"data": "02/03/2026", "label": "02/03", "entradas": 0, "saidas": 23292.14, "total": 4697324.600000001}, {"data": "03/03/2026", "label": "03/03", "entradas": 0, "saidas": 20490.33, "total": 4676834.2700000005}, {"data": "04/03/2026", "label": "04/03", "entradas": 0, "saidas": 86878.73, "total": 4589955.540000001}, {"data": "07/03/2026", "label": "07/03", "entradas": 0, "saidas": 41667.560000000005, "total": 4548287.98}, {"data": "09/03/2026", "label": "09/03", "entradas": 0, "saidas": 27596.72, "total": 4520691.260000001}, {"data": "10/03/2026", "label": "10/03", "entradas": 0, "saidas": 27533.48, "total": 4493157.780000001}, {"data": "11/03/2026", "label": "11/03", "entradas": 0, "saidas": 29471.660000000003, "total": 4463686.120000001}, {"data": "15/03/2026", "label": "15/03", "entradas": 8849.3, "saidas": 0, "total": 4472535.420000001}, {"data": "16/03/2026", "label": "16/03", "entradas": 0, "saidas": 91678.36, "total": 4380857.0600000005}, {"data": "19/03/2026", "label": "19/03", "entradas": 0, "saidas": 48527.16, "total": 4332329.9}, {"data": "20/03/2026", "label": "20/03", "entradas": 55007.29, "saidas": 42501.13, "total": 4344836.0600000005}, {"data": "21/03/2026", "label": "21/03", "entradas": 0, "saidas": 17657.74, "total": 4327178.32}, {"data": "22/03/2026", "label": "22/03", "entradas": 0, "saidas": 39799.4, "total": 4287378.920000001}, {"data": "23/03/2026", "label": "23/03", "entradas": 0, "saidas": 53635.590000000004, "total": 4233743.330000001}, {"data": "24/03/2026", "label": "24/03", "entradas": 0, "saidas": 131595.19999999998, "total": 4102148.130000001}, {"data": "25/03/2026", "label": "25/03", "entradas": 0, "saidas": 32676.29, "total": 4069471.840000001}, {"data": "26/03/2026", "label": "26/03", "entradas": 32847.78, "saidas": 47170.85, "total": 4055148.7700000005}, {"data": "27/03/2026", "label": "27/03", "entradas": 40816.84, "saidas": 30390.08, "total": 4065575.5300000007}, {"data": "28/03/2026", "label": "28/03", "entradas": 56868.36, "saidas": 33174.88, "total": 4089269.0100000007}, {"data": "30/03/2026", "label": "30/03", "entradas": 0, "saidas": 83222.56, "total": 4006046.4500000007}, {"data": "01/04/2026", "label": "01/04", "entradas": 0, "saidas": 27178.15, "total": 3978868.3000000007}, {"data": "03/04/2026", "label": "03/04", "entradas": 0, "saidas": 30724.95, "total": 3948143.3500000006}, {"data": "05/04/2026", "label": "05/04", "entradas": 0, "saidas": 6510.01, "total": 3941633.340000001}, {"data": "06/04/2026", "label": "06/04", "entradas": 0, "saidas": 22567.170000000002, "total": 3919066.170000001}, {"data": "07/04/2026", "label": "07/04", "entradas": 0, "saidas": 19801.06, "total": 3899265.110000001}, {"data": "08/04/2026", "label": "08/04", "entradas": 0, "saidas": 39888.72, "total": 3859376.3900000006}, {"data": "10/04/2026", "label": "10/04", "entradas": 20458.39, "saidas": 0, "total": 3879834.7800000007}, {"data": "11/04/2026", "label": "11/04", "entradas": 0, "saidas": 39247.93, "total": 3840586.8500000006}, {"data": "13/04/2026", "label": "13/04", "entradas": 0, "saidas": 60675.21, "total": 3779911.6400000006}, {"data": "14/04/2026", "label": "14/04", "entradas": 0, "saidas": 24813.88, "total": 3755097.7600000007}, {"data": "15/04/2026", "label": "15/04", "entradas": 59870.45, "saidas": 0, "total": 3814968.210000001}, {"data": "17/04/2026", "label": "17/04", "entradas": 0, "saidas": 33230.17, "total": 3781738.040000001}, {"data": "19/04/2026", "label": "19/04", "entradas": 0, "saidas": 106784.37999999999, "total": 3674953.660000001}, {"data": "20/04/2026", "label": "20/04", "entradas": 0, "saidas": 2811.79, "total": 3672141.870000001}, {"data": "21/04/2026", "label": "21/04", "entradas": 0, "saidas": 56005.17, "total": 3616136.700000001}, {"data": "22/04/2026", "label": "22/04", "entradas": 0, "saidas": 34145.19, "total": 3581991.510000001}, {"data": "27/04/2026", "label": "27/04", "entradas": 57040.86, "saidas": 8375.15, "total": 3630657.220000001}, {"data": "29/04/2026", "label": "29/04", "entradas": 0, "saidas": 41200.96, "total": 3589456.260000001}, {"data": "30/04/2026", "label": "30/04", "entradas": 0, "saidas": 87470.09, "total": 3501986.170000001}, {"data": "01/05/2026", "label": "01/05", "entradas": 0, "saidas": 24877.550000000003, "total": 3477108.620000001}, {"data": "02/05/2026", "label": "02/05", "entradas": 64972.12, "saidas": 112955.26999999999, "total": 3429125.470000001}, {"data": "03/05/2026", "label": "03/05", "entradas": 0, "saidas": 19662.97, "total": 3409462.500000001}, {"data": "04/05/2026", "label": "04/05", "entradas": 0, "saidas": 39828.07, "total": 3369634.430000001}, {"data": "05/05/2026", "label": "05/05", "entradas": 0, "saidas": 21951.08, "total": 3347683.350000001}, {"data": "06/05/2026", "label": "06/05", "entradas": 0, "saidas": 67457.84, "total": 3280225.510000001}, {"data": "07/05/2026", "label": "07/05", "entradas": 0, "saidas": 54231.18, "total": 3225994.330000001}, {"data": "08/05/2026", "label": "08/05", "entradas": 0, "saidas": 23239.86, "total": 3202754.470000001}, {"data": "09/05/2026", "label": "09/05", "entradas": 0, "saidas": 37410.39, "total": 3165344.080000001}, {"data": "10/05/2026", "label": "10/05", "entradas": 0, "saidas": 83990.54, "total": 3081353.540000001}, {"data": "11/05/2026", "label": "11/05", "entradas": 0, "saidas": 43566.21, "total": 3037787.330000001}, {"data": "13/05/2026", "label": "13/05", "entradas": 0, "saidas": 42897.15, "total": 2994890.180000001}, {"data": "14/05/2026", "label": "14/05", "entradas": 0, "saidas": 9130.84, "total": 2985759.3400000012}, {"data": "15/05/2026", "label": "15/05", "entradas": 0, "saidas": 37191.6, "total": 2948567.740000001}, {"data": "16/05/2026", "label": "16/05", "entradas": 0, "saidas": 22732.18, "total": 2925835.560000001}, {"data": "17/05/2026", "label": "17/05", "entradas": 0, "saidas": 61121.76, "total": 2864713.800000001}, {"data": "18/05/2026", "label": "18/05", "entradas": 0, "saidas": 34929.72, "total": 2829784.080000001}, {"data": "19/05/2026", "label": "19/05", "entradas": 83141.13, "saidas": 15532.23, "total": 2897392.980000001}, {"data": "20/05/2026", "label": "20/05", "entradas": 70992.7, "saidas": 114506.46, "total": 2853879.2200000007}, {"data": "21/05/2026", "label": "21/05", "entradas": 0, "saidas": 20774.73, "total": 2833104.4900000007}, {"data": "22/05/2026", "label": "22/05", "entradas": 32243.27, "saidas": 78423.59999999999, "total": 2786924.1600000006}, {"data": "23/05/2026", "label": "23/05", "entradas": 0, "saidas": 44301.5, "total": 2742622.6600000006}, {"data": "25/05/2026", "label": "25/05", "entradas": 85235.25, "saidas": 64897.29000000001, "total": 2762960.6200000006}, {"data": "26/05/2026", "label": "26/05", "entradas": 0, "saidas": 65350.35, "total": 2697610.2700000005}, {"data": "27/05/2026", "label": "27/05", "entradas": 0, "saidas": 37518.31, "total": 2660091.9600000004}, {"data": "28/05/2026", "label": "28/05", "entradas": 0, "saidas": 44049.29, "total": 2616042.6700000004}, {"data": "29/05/2026", "label": "29/05", "entradas": 0, "saidas": 29078.89, "total": 2586963.7800000003}, {"data": "30/05/2026", "label": "30/05", "entradas": 0, "saidas": 44870.79, "total": 2542092.99}, {"data": "31/05/2026", "label": "31/05", "entradas": 27340.51, "saidas": 8585.25, "total": 2560848.25}, {"data": "01/06/2026", "label": "01/06", "entradas": 0, "saidas": 81422.18, "total": 2479426.07}, {"data": "02/06/2026", "label": "02/06", "entradas": 0, "saidas": 5830.73, "total": 2473595.34}, {"data": "03/06/2026", "label": "03/06", "entradas": 82213.93, "saidas": 41213.41, "total": 2514595.86}, {"data": "04/06/2026", "label": "04/06", "entradas": 0, "saidas": 6590.78, "total": 2508005.08}, {"data": "05/06/2026", "label": "05/06", "entradas": 0, "saidas": 28986.34, "total": 2479018.74}, {"data": "06/06/2026", "label": "06/06", "entradas": 36658.67, "saidas": 33580.81, "total": 2482096.6}, {"data": "07/06/2026", "label": "07/06", "entradas": 70349.77, "saidas": 127493.22, "total": 2424953.15}, {"data": "08/06/2026", "label": "08/06", "entradas": 0, "saidas": 46365.58, "total": 2378587.57}, {"data": "09/06/2026", "label": "09/06", "entradas": 0, "saidas": 26961.66, "total": 2351625.9099999997}, {"data": "11/06/2026", "label": "11/06", "entradas": 0, "saidas": 18867.61, "total": 2332758.3}, {"data": "13/06/2026", "label": "13/06", "entradas": 0, "saidas": 80752.48999999999, "total": 2252005.8099999996}, {"data": "15/06/2026", "label": "15/06", "entradas": 0, "saidas": 60152.28, "total": 2191853.53}, {"data": "18/06/2026", "label": "18/06", "entradas": 63516.95, "saidas": 0, "total": 2255370.48}, {"data": "19/06/2026", "label": "19/06", "entradas": 0, "saidas": 25351.71, "total": 2230018.77}, {"data": "21/06/2026", "label": "21/06", "entradas": 82208.43, "saidas": 0, "total": 2312227.2}, {"data": "22/06/2026", "label": "22/06", "entradas": 0, "saidas": 67656.95, "total": 2244570.25}, {"data": "23/06/2026", "label": "23/06", "entradas": 77032.9, "saidas": 29827.74, "total": 2291775.41}, {"data": "25/06/2026", "label": "25/06", "entradas": 0, "saidas": 60562.2, "total": 2231213.21}, {"data": "26/06/2026", "label": "26/06", "entradas": 69358.13, "saidas": 0, "total": 2300571.34}, {"data": "27/06/2026", "label": "27/06", "entradas": 0, "saidas": 60709.8, "total": 2239861.54}, {"data": "29/06/2026", "label": "29/06", "entradas": 0, "saidas": 15954.94, "total": 2223906.6}, {"data": "30/06/2026", "label": "30/06", "entradas": 0, "saidas": 21174.88, "total": 2202731.72}, {"data": "01/07/2026", "label": "01/07", "entradas": 0, "saidas": 73329.52, "total": 2129402.2}, {"data": "02/07/2026", "label": "02/07", "entradas": 0, "saidas": 36400.47, "total": 2093001.73}, {"data": "03/07/2026", "label": "03/07", "entradas": 0, "saidas": 11752.16, "total": 2081249.5699999998}, {"data": "04/07/2026", "label": "04/07", "entradas": 0, "saidas": 73759.42, "total": 2007490.15}, {"data": "06/07/2026", "label": "06/07", "entradas": 0, "saidas": 89187.73, "total": 1918302.42}, {"data": "08/07/2026", "label": "08/07", "entradas": 10028.77, "saidas": 38782.92, "total": 1889548.27}, {"data": "09/07/2026", "label": "09/07", "entradas": 0, "saidas": 68407.57, "total": 1821140.7000000002}, {"data": "10/07/2026", "label": "10/07", "entradas": 0, "saidas": 54721.340000000004, "total": 1766419.3600000003}, {"data": "11/07/2026", "label": "11/07", "entradas": 32015.3, "saidas": 20671.22, "total": 1777763.4400000004}, {"data": "12/07/2026", "label": "12/07", "entradas": 64563.09, "saidas": 48381.130000000005, "total": 1793945.4000000004}, {"data": "14/07/2026", "label": "14/07", "entradas": 0, "saidas": 6971.66, "total": 1786973.7400000002}, {"data": "15/07/2026", "label": "15/07", "entradas": 0, "saidas": 9279.33, "total": 1777694.4100000001}, {"data": "16/07/2026", "label": "16/07", "entradas": 0, "saidas": 118279.20000000001, "total": 1659415.21}, {"data": "18/07/2026", "label": "18/07", "entradas": 0, "saidas": 82815.64, "total": 1576599.5699999998}, {"data": "19/07/2026", "label": "19/07", "entradas": 0, "saidas": 49185.32, "total": 1527414.25}, {"data": "20/07/2026", "label": "20/07", "entradas": 0, "saidas": 33235.76, "total": 1494178.4900000002}, {"data": "21/07/2026", "label": "21/07", "entradas": 0, "saidas": 57694.64, "total": 1436483.85}, {"data": "22/07/2026", "label": "22/07", "entradas": 0, "saidas": 11734.24, "total": 1424749.6099999999}, {"data": "23/07/2026", "label": "23/07", "entradas": 0, "saidas": 40392.61, "total": 1384357}, {"data": "24/07/2026", "label": "24/07", "entradas": 0, "saidas": 39392.57, "total": 1344964.4300000002}, {"data": "25/07/2026", "label": "25/07", "entradas": 0, "saidas": 42571.75, "total": 1302392.6800000002}, {"data": "27/07/2026", "label": "27/07", "entradas": 0, "saidas": 56998.479999999996, "total": 1245394.2000000002}, {"data": "30/07/2026", "label": "30/07", "entradas": 0, "saidas": 94078.71, "total": 1151315.4900000002}, {"data": "31/07/2026", "label": "31/07", "entradas": 0, "saidas": 41075.81, "total": 1110239.6800000006}, {"data": "01/08/2026", "label": "01/08", "entradas": 0, "saidas": 14110.88, "total": 1096128.8000000007}, {"data": "02/08/2026", "label": "02/08", "entradas": 0, "saidas": 29960.99, "total": 1066167.8100000005}, {"data": "03/08/2026", "label": "03/08", "entradas": 0, "saidas": 13566.5, "total": 1052601.3100000005}, {"data": "04/08/2026", "label": "04/08", "entradas": 76695.09, "saidas": 46278.71, "total": 1083017.6900000004}, {"data": "08/08/2026", "label": "08/08", "entradas": 11315.2, "saidas": 22809.21, "total": 1071523.6800000006}, {"data": "15/08/2026", "label": "15/08", "entradas": 0, "saidas": 13057.16, "total": 1058466.5200000005}], "pendentes": [{"id": "001019-00000020019", "banco": "Banco Gama", "data": "21/07/2026", "valor": 38028.05, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Gama"}, {"id": "001031-00000020031", "banco": "Banco Gama", "data": "12/04/2026", "valor": 58182.75, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Gama"}, {"id": "001040-00000020040", "banco": "Banco Alfa", "data": "02/05/2026", "valor": -14675.07, "descricao": "Cedro Advocacia", "tipo_lanc": "IOF", "banco_orig": "Banco Alfa"}, {"id": "001057-00000020057", "banco": "Banco Alfa", "data": "03/07/2026", "valor": -43440.66, "descricao": "Bela Vista Facilities", "tipo_lanc": "RC", "banco_orig": "Banco Alfa"}, {"id": "001058-00000020058", "banco": "Banco Beta", "data": "31/07/2026", "valor": -9566.18, "descricao": "Nexus Marketing Digital", "tipo_lanc": "JR", "banco_orig": "Banco Beta"}, {"id": "001093-00000020093", "banco": "Banco Gama", "data": "15/07/2026", "valor": 72264.48, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Gama"}, {"id": "001107-00000020107", "banco": "Banco Delta", "data": "29/06/2026", "valor": -17177.42, "descricao": "Ondas Telecom", "tipo_lanc": "RD", "banco_orig": "Banco Delta"}, {"id": "001111-00000020111", "banco": "Banco Beta", "data": "17/04/2026", "valor": -11878.92, "descricao": "Nexus Marketing Digital", "tipo_lanc": "FOL", "banco_orig": "Banco Beta"}, {"id": "001114-00000020114", "banco": "Banco Delta", "data": "27/05/2026", "valor": 44671.43, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Delta"}, {"id": "001120-00000020120", "banco": "Banco Gama", "data": "12/02/2026", "valor": -6202.62, "descricao": "Litoral Transportes", "tipo_lanc": "NF", "banco_orig": "Banco Gama"}, {"id": "001141-00000020141", "banco": "Banco Alfa", "data": "18/04/2026", "valor": -6499.66, "descricao": "Vintage Papelaria e Suprimentos", "tipo_lanc": "TAR", "banco_orig": "Banco Alfa"}, {"id": "001143-00000020143", "banco": "Banco Beta", "data": "04/04/2026", "valor": -9286.63, "descricao": "Comercial Estrela Azul", "tipo_lanc": "RC", "banco_orig": "Banco Beta"}, {"id": "001152-00000020152", "banco": "Banco Beta", "data": "16/06/2026", "valor": 21761.96, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Beta"}, {"id": "001164-00000020164", "banco": "Banco Delta", "data": "10/04/2026", "valor": -30466.33, "descricao": "Prisma Consultoria Financeira", "tipo_lanc": "FOL", "banco_orig": "Banco Delta"}, {"id": "001181-00000020181", "banco": "Banco Gama", "data": "04/05/2026", "valor": -42071.82, "descricao": "Grupo Horizonte Logística", "tipo_lanc": "FT", "banco_orig": "Banco Gama"}, {"id": "001186-00000020186", "banco": "Banco Delta", "data": "23/04/2026", "valor": -27428.86, "descricao": "Fenix Segurança Patrimonial", "tipo_lanc": "NF", "banco_orig": "Banco Delta"}, {"id": "001196-00000020196", "banco": "Banco Gama", "data": "29/01/2026", "valor": 83388.84, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Gama"}, {"id": "001198-00000020198", "banco": "Banco Delta", "data": "12/02/2026", "valor": -3120.11, "descricao": "Prisma Consultoria Financeira", "tipo_lanc": "BOL", "banco_orig": "Banco Delta"}, {"id": "001200-00000020200", "banco": "Banco Alfa", "data": "25/06/2026", "valor": 52949.6, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Alfa"}, {"id": "001224-00000020224", "banco": "Banco Beta", "data": "26/06/2026", "valor": -24475.09, "descricao": "Aurora Tecnologia LTDA", "tipo_lanc": "TAR", "banco_orig": "Banco Beta"}, {"id": "001226-00000020226", "banco": "Banco Delta", "data": "19/01/2026", "valor": -33812.06, "descricao": "Girassol RH Consultoria", "tipo_lanc": "JR", "banco_orig": "Banco Delta"}, {"id": "001236-00000020236", "banco": "Banco Alfa", "data": "10/06/2026", "valor": -37400.34, "descricao": "Zenith Softwares", "tipo_lanc": "BOL", "banco_orig": "Banco Alfa"}, {"id": "001250-00000020250", "banco": "Banco Delta", "data": "21/04/2026", "valor": -8651.57, "descricao": "Prisma Consultoria Financeira", "tipo_lanc": "FT", "banco_orig": "Banco Delta"}, {"id": "001273-00000020273", "banco": "Banco Alfa", "data": "04/03/2026", "valor": -12616.56, "descricao": "Comercial Estrela Azul", "tipo_lanc": "NF", "banco_orig": "Banco Alfa"}, {"id": "001280-00000020280", "banco": "Banco Alfa", "data": "18/03/2026", "valor": -16731.24, "descricao": "Prisma Consultoria Financeira", "tipo_lanc": "NF", "banco_orig": "Banco Alfa"}, {"id": "001295-00000020295", "banco": "Banco Gama", "data": "07/03/2026", "valor": -12258.72, "descricao": "Comercial Estrela Azul", "tipo_lanc": "BOL", "banco_orig": "Banco Gama"}, {"id": "001312-00000020312", "banco": "Banco Alfa", "data": "24/07/2026", "valor": 53992.33, "descricao": "Cliente Corporativo", "tipo_lanc": "RC", "banco_orig": "Banco Alfa"}, {"id": "001313-00000020313", "banco": "Banco Gama", "data": "01/02/2026", "valor": -4865.46, "descricao": "Nexus Marketing Digital", "tipo_lanc": "FT", "banco_orig": "Banco Gama"}, {"id": "001318-00000020318", "banco": "Banco Alfa", "data": "25/05/2026", "valor": -12753.26, "descricao": "Prisma Consultoria Financeira", "tipo_lanc": "TED", "banco_orig": "Banco Alfa"}], "so_bases": [], "saldos_finais": {"Banco Alfa": 774596.89, "Banco Beta": 42710.97, "Banco Gama": 5339.6, "Banco Delta": 235819.06}, "saldo_diario": [{"data": "15/06/2026", "valor": 1308139.33}, {"data": "16/06/2026", "valor": 1298594.26}, {"data": "17/06/2026", "valor": 1292921.27}, {"data": "18/06/2026", "valor": 1290655.91}, {"data": "19/06/2026", "valor": 1282098.25}, {"data": "20/06/2026", "valor": 1273050.61}, {"data": "21/06/2026", "valor": 1265637.98}, {"data": "22/06/2026", "valor": 1259612.21}, {"data": "23/06/2026", "valor": 1251286.63}, {"data": "24/06/2026", "valor": 1245524.98}, {"data": "25/06/2026", "valor": 1239631.71}, {"data": "26/06/2026", "valor": 1230330.62}, {"data": "27/06/2026", "valor": 1221675.08}, {"data": "28/06/2026", "valor": 1215057.25}, {"data": "29/06/2026", "valor": 1207415.35}, {"data": "30/06/2026", "valor": 1201237.98}, {"data": "01/07/2026", "valor": 1190690.44}, {"data": "02/07/2026", "valor": 1185277.95}, {"data": "03/07/2026", "valor": 1178988.72}, {"data": "04/07/2026", "valor": 1178136.44}, {"data": "05/07/2026", "valor": 1172896.95}, {"data": "06/07/2026", "valor": 1169738.55}, {"data": "07/07/2026", "valor": 1163142.71}, {"data": "08/07/2026", "valor": 1154459.02}, {"data": "09/07/2026", "valor": 1148090.09}, {"data": "10/07/2026", "valor": 1145123.1}, {"data": "11/07/2026", "valor": 1136878.17}, {"data": "12/07/2026", "valor": 1132431.16}, {"data": "13/07/2026", "valor": 1129690.3}, {"data": "14/07/2026", "valor": 1124769.31}, {"data": "15/07/2026", "valor": 1121476.16}, {"data": "16/07/2026", "valor": 1116006.46}, {"data": "17/07/2026", "valor": 1111079.62}, {"data": "18/07/2026", "valor": 1105239.85}, {"data": "19/07/2026", "valor": 1100783.61}, {"data": "20/07/2026", "valor": 1100866.27}, {"data": "21/07/2026", "valor": 1098000.16}, {"data": "22/07/2026", "valor": 1092297.98}, {"data": "23/07/2026", "valor": 1088850.03}, {"data": "24/07/2026", "valor": 1081283.22}, {"data": "25/07/2026", "valor": 1073058.77}, {"data": "26/07/2026", "valor": 1067068.18}, {"data": "27/07/2026", "valor": 1062686.16}, {"data": "28/07/2026", "valor": 1059817.27}, {"data": "29/07/2026", "valor": 1058976.61}, {"data": "30/07/2026", "valor": 1058466.52}, {"data": "31/07/2026", "valor": 1049718.97}], "cfxp_desp": {"Despesas Financeiras": 843447.7399999999, "Despesas Gerais": 793525.7299999997, "Marketing": 757926.03, "Ocupacao": 751773.4800000002, "Salarios": 693801.0700000001, "Intermediacao / Custas": 621849.7099999998, "Encargos": 581578.39, "Beneficios": 554914.78, "Softwares": 508978.16000000003, "Impostos s/ Receita": 387602.3699999999}, "cfxp_rec": {"Receita Servicos": 2102854.2100000004}, "centro_desp": {"RH": 1366925.7899999998, "Comercial": 1359889.39, "TI": 1281405.0499999998, "Operacoes": 1273131.5900000005, "Administrativo": 1214045.6400000001}, "tipo_desp": {"FT": 814981.8999999999, "BOL": 813020.44, "RC": 724897.0599999998, "RD": 702955.73, "TED": 621365.6599999999, "FOL": 599885.1300000001, "JR": 591483.06, "NF": 559247.2999999999}, "stats": {"total_lanc": 320, "conciliados": 291, "pendentes_n": 29, "total_rec": 2102854.2100000004, "total_des": 6495397.46, "total_pend_val": 810618.0199999997, "saldo_final": 1058466.52, "saldo_atual_data": "30/07/2026", "saldo_inicial": 0, "pct_conciliado": 90.9}, "updatedAt": "2026-07-30T19:50:41.211Z", "filename": "Cashflow_demo.xlsx"};
+const DISPLAY_NAMES={'demo':'Visitante'};
+function greetingWord(){const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';}
+function parseBRDate(s){if(!s||typeof s!=='string')return null;const parts=s.split('/');if(parts.length!==3)return null;const d=new Date(+parts[2],+parts[1]-1,+parts[0]);return isNaN(d)?null:d;}
+let curSec='geral';
+const USERS={'demo':'demo'};
+const ADMINS=['demo'];
+let curUser=null;
+const isViewerLink=new URLSearchParams(window.location.search).get('view')==='1';
+function fR(v,f=false){
+  const n=parseFloat(v);
+  if(isNaN(n)||v===null||v===undefined)return f?'R$ 0,00':'R$ 0';
+  if(f)return'R$ '+Math.abs(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const a=Math.abs(n);
+  if(a>=1e6)return'R$ '+(n/1e6).toFixed(2)+'M';
+  if(a>=1e3)return'R$ '+(n/1e3).toFixed(1)+'K';
+  return'R$ '+Math.round(n).toLocaleString('pt-BR');
+}
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function showErr(m){const b=document.getElementById('errBanner');b.textContent=m;b.classList.add('show');setTimeout(()=>b.classList.remove('show'),8000);}
+function setStatus(cls,txt){const d=document.getElementById('sdot'),t=document.getElementById('stxt');if(d)d.className='sdot'+(cls?' '+cls:'');if(t)t.textContent=txt;}
+
+const JSONBIN_MK=''; // sincronização com nuvem desativada nesta versão de demonstração
+const JSONBIN_URL='https://api.jsonbin.io/v3/b';
+const JSONBIN_DEFAULT_ID='';
+const LOCAL_KEY='fp_demo_local_data';
+let binId=null;
+let cloudOk=false; // versão de portfólio: sempre usa dados de demonstração fictícios, sem nuvem
+
+async function saveToStorage(data){
+  // Reduzir tamanho — remover campos longos desnecessários
+  const slim={
+    ...data,
+    lanc:data.lanc.map(l=>({
+      id:l.id,banco:l.banco,data:l.data,valor:l.valor,
+      tipo_lanc:l.tipo_lanc,fornecedor:l.fornecedor.substring(0,25),
+      centro:l.centro,cfxp:l.cfxp,status:l.status,
+      conciliado:l.conciliado,pendente:l.pendente
+    })),
+    so_bases:data.so_bases.map(b=>({
+      origem:b.origem,dt_baixa:b.dt_baixa,fornecedor:b.fornecedor.substring(0,25),
+      cfxp:b.cfxp,categoria:b.categoria,centro:b.centro,valor:b.valor
+    }))
+  };
+  // Remover campo descricao dos pendentes (já temos nos lanc)
+  if(slim.pendentes) slim.pendentes=data.pendentes.map(p=>({
+    id:p.id,banco:p.banco,data:p.data,valor:p.valor,
+    descricao:p.descricao,tipo_lanc:p.tipo_lanc
+  }));
+
+  const body=JSON.stringify(slim);
+  console.log('Payload size:', (body.length/1024).toFixed(1)+'KB');
+
+  // Salva sempre uma cópia local — garante que funciona mesmo sem acesso à nuvem
+  try{ localStorage.setItem(LOCAL_KEY, body); }catch(e){ console.warn('Falha ao salvar localmente:', e); }
+
+  if(!JSONBIN_MK){cloudOk=false;return;} // versão de demonstração — sem sincronização com nuvem
+
+  try{
+    if(!binId){
+      const r=await fetch(JSONBIN_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_MK,'X-Bin-Private':'false','X-Bin-Name':'financepro_data'},
+        body
+      });
+      const d=await r.json();
+      console.log('createBin response:', d);
+      if(d.metadata?.id){binId=d.metadata.id;localStorage.setItem('fp_jsonbin_id',binId);}
+      else throw new Error('Bin não criado: '+JSON.stringify(d));
+    } else {
+      const r=await fetch(JSONBIN_URL+'/'+binId,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_MK},
+        body
+      });
+      const d=await r.json();
+      console.log('updateBin response:', d);
+      if(!d.record)throw new Error('Bin não atualizado: '+JSON.stringify(d));
+    }
+    cloudOk=true;
+  }catch(e){
+    cloudOk=false;
+    console.warn('Sincronização com a nuvem falhou — dados salvos apenas neste navegador:', e);
+  }
+}
+
+async function loadFromStorage(){
+  // Versão de demonstração: sem chave de nuvem configurada, pula direto pro fallback local/demo
+  if(!JSONBIN_MK){
+    cloudOk=false;
+    if(isViewerLink)return (typeof DEMO_DATA!=='undefined')?DEMO_DATA:null;
+    try{
+      const raw=localStorage.getItem(LOCAL_KEY);
+      if(raw)return JSON.parse(raw);
+    }catch(e){}
+    return (typeof DEMO_DATA!=='undefined')?DEMO_DATA:null;
+  }
+  // Tentar buscar binId listando os bins pelo nome
+  if(!binId){
+    try{
+      const r=await fetch('https://api.jsonbin.io/v3/b?sortBy=date&order=desc&limit=10',{
+        headers:{'X-Master-Key':JSONBIN_MK,'X-Bin-Meta':true}
+      });
+      if(r.ok){
+        const d=await r.json();
+        const arr=Array.isArray(d)?d:(d.bins||[]);
+        if(arr.length>0){
+          // Pegar o mais recente que tem dados
+          const found=arr.find(b=>b.id||b._id);
+          if(found){
+            const fid=found._id||found.id;
+            binId=fid;
+            localStorage.setItem('fp_jsonbin_id',binId);
+            console.log('Bin encontrado na listagem:',binId);
+          }
+        }
+      }
+    }catch(e){console.log('busca bins erro:',e);}
+  }
+  if(binId){
+    try{
+      const r=await fetch(JSONBIN_URL+'/'+binId+'/latest',{headers:{'X-Master-Key':JSONBIN_MK}});
+      if(r.status===404){binId=null;localStorage.removeItem('fp_jsonbin_id');}
+      else if(r.ok){
+        const d=await r.json();
+        console.log('Dados carregados do bin:', binId, '- keys:', Object.keys(d.record||{}));
+        cloudOk=true;
+        return d.record||null;
+      } else {
+        console.error('loadFromStorage status:',r.status);
+      }
+    }catch(e){
+      console.error('loadFromStorage:',e);
+    }
+  }
+  // Nuvem indisponível (rede bloqueada, offline, etc.) — usa cópia local salva neste navegador
+  cloudOk=false;
+  if(isViewerLink)return (typeof DEMO_DATA!=='undefined')?DEMO_DATA:null;
+  try{
+    const raw=localStorage.getItem(LOCAL_KEY);
+    if(raw){
+      console.log('Nuvem indisponível — usando dados salvos localmente neste navegador');
+      return JSON.parse(raw);
+    }
+  }catch(e){console.warn('Falha ao ler dados locais:',e);}
+  // Versão de demonstração — carrega dados fictícios de exemplo
+  if(typeof DEMO_DATA!=='undefined')return DEMO_DATA;
+  return null;
+}
+
+
+let valuesHidden=false;
+
+function toggleValues(){
+  valuesHidden=!valuesHidden;
+  const btn=document.getElementById('btnEye');
+  btn.classList.toggle('hidden-mode',valuesHidden);
+  btn.title=valuesHidden?'Revelar valores':'Ocultar valores';
+  btn.innerHTML=valuesHidden
+    ?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    :`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  document.querySelectorAll('.kv,.kb').forEach(el=>{
+    el.classList.toggle('val-hidden', valuesHidden);
+  });
+}
+
+function copyLink(){
+  const url=window.location.origin+window.location.pathname+'?view=1';
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn=document.getElementById('btnCopy');
+    const orig=btn.innerHTML;
+    btn.textContent='✓ Link copiado!';
+    btn.style.background='#2d8a5a';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.background='';},2500);
+  }).catch(()=>prompt('Copie o link:',url));
+}
+
+// ── SESSÃO (login removido — acesso direto) ──
+async function initApp(u){
+  curUser=u;
+  await setupUser(u);
+}
+async function setupUser(u){
+  const admin=ADMINS.includes(u)&&!isViewerLink;
+  document.getElementById('upa').style.display=admin?'flex':'none';
+  // Não-admin nunca vê tela de upload
+  document.getElementById('upg').style.display='none';
+  setStatus('','Carregando...');
+  const data=await loadFromStorage();
+  if(data&&data.lanc&&data.lanc.length>0){
+    applyData(data);
+    const upAt=data.updatedAt?new Date(data.updatedAt).toLocaleString('pt-BR'):'—';
+    document.getElementById('sfooter').textContent='Última atualização'+'\n'+upAt;
+    document.getElementById('ps').textContent=(cloudOk?'Atualizado em ':'⚠ Local (sem sync) — ')+upAt;
+    setStatus(cloudOk?'ok':'err',cloudOk?'Dados carregados':'Local, sem sync');
+    document.getElementById('upg').style.display='none';
+    document.getElementById('dg').style.display='block';
+    if(admin)document.getElementById('btnCopy').style.display='flex';
+    document.getElementById('btnEye').style.display=EYE_SECTIONS.includes(curSec)?'flex':'none';
+    G.loaded=true;
+    setTimeout(renderCur,80);
+  } else {
+    setStatus('err','Sem dados');
+    let localRaw=null,localErr=null;
+    try{localRaw=localStorage.getItem(LOCAL_KEY);}catch(e){localErr=e.message;}
+    const diag=[
+      'URL desta página: '+window.location.href,
+      'Link de visualização (?view=1): '+(isViewerLink?'sim':'não'),
+      'Nuvem acessível: '+(cloudOk?'sim':'não (bloqueada ou offline)'),
+      'ID salvo na nuvem (binId): '+(binId||'nenhum'),
+      'Cache local neste navegador: '+(localErr?('erro ao ler — '+localErr):(localRaw?('encontrado, '+(localRaw.length/1024).toFixed(1)+'KB'):'não encontrado'))
+    ].join('\n');
+    const diagEl=document.getElementById('diagBox');
+    if(diagEl){diagEl.textContent=diag;diagEl.style.display='block';}
+    if(admin){
+      document.getElementById('upg').style.display='block';
+      document.getElementById('ps').textContent='Carregue o Excel para começar';
+    } else {
+      document.getElementById('ps').textContent='Aguardando dados — peça o link para Falmeida';
+      showErr('Nenhum dado encontrado. Peça o link atualizado para o Falmeida.');
+    }
+  }
+}
+function applyData(data){
+  G.lanc=data.lanc||[];G.fluxo=data.fluxo||[];
+  G.pendentes=data.pendentes||[];G.so_bases=data.so_bases||[];
+  G.saldos_finais=data.saldos_finais||{};G.saldo_diario=data.saldo_diario||[];G.cfxp_desp=data.cfxp_desp||{};
+  G.cfxp_rec=data.cfxp_rec||{};G.centro_desp=data.centro_desp||{};
+  G.tipo_desp=data.tipo_desp||{};G.stats=data.stats||{};
+}
+
+// ── UPLOAD ──
+function onFile(e){
+  const file=e.target.files[0];if(!file)return;
+  processFile(file);
+  e.target.value='';
+}
+function processFile(file){
+  if(isViewerLink||!ADMINS.includes(curUser))return;
+  if(!/\.(xlsx|xls)$/i.test(file.name)){showErr('Envie um arquivo .xlsx ou .xls');return;}
+  setStatus('','Processando...');
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array',cellDates:true,raw:true});
+      const parsed=parseWB(wb,file.name);
+      const payload={...parsed,updatedAt:new Date().toISOString(),filename:file.name};
+      await saveToStorage(payload);
+      applyData(payload);
+      G.loaded=true;
+      setStatus(cloudOk?'ok':'err',cloudOk?'Carregado':'Local, sem sync');
+      document.getElementById('sfooter').textContent='Última atualização'+'\n'+new Date().toLocaleString('pt-BR');
+      document.getElementById('ps').textContent=(cloudOk?'':'⚠ Local (sem sync) — ')+file.name+' — '+new Date().toLocaleTimeString('pt-BR');
+      document.getElementById('upg').style.display='none';
+      document.getElementById('dg').style.display='block';
+      document.getElementById('btnCopy').style.display='flex';
+      document.getElementById('btnEye').style.display=EYE_SECTIONS.includes(curSec)?'flex':'none';
+      setTimeout(renderCur,80);
+    } catch(err){setStatus('err','Erro');showErr('Erro: '+err.message);console.error(err);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+// Arrastar e soltar o Excel em qualquer lugar da tela para atualizar automaticamente
+let dropOverlayEl=null;
+function ensureDropOverlay(){
+  if(dropOverlayEl)return dropOverlayEl;
+  const d=document.createElement('div');
+  d.id='dropOverlay';
+  d.style.cssText='position:fixed;inset:0;background:rgba(26,58,92,0.85);z-index:9999;display:none;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:500;pointer-events:none;border:3px dashed rgba(255,255,255,0.6);';
+  d.innerHTML='📎 Solte o arquivo Excel para atualizar o portal';
+  document.body.appendChild(d);
+  dropOverlayEl=d;
+  return d;
+}
+window.addEventListener('dragover',e=>{
+  if(isViewerLink||!curUser||!ADMINS.includes(curUser))return;
+  e.preventDefault();
+  ensureDropOverlay().style.display='flex';
+});
+window.addEventListener('dragleave',e=>{
+  if(e.clientX<=0||e.clientY<=0||e.clientX>=window.innerWidth||e.clientY>=window.innerHeight){
+    if(dropOverlayEl)dropOverlayEl.style.display='none';
+  }
+});
+window.addEventListener('drop',e=>{
+  e.preventDefault();
+  if(dropOverlayEl)dropOverlayEl.style.display='none';
+  if(isViewerLink||!curUser||!ADMINS.includes(curUser))return;
+  const file=e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(file)processFile(file);
+});
+
+function pn(v){
+  if(v===null||v===undefined||v==='')return 0;
+  if(typeof v==='number')return isFinite(v)?v:0;
+  const n=parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(',','.'));
+  return isNaN(n)?0:n;
+}
+function fd(v){if(!v)return'';if(v instanceof Date)return v.toLocaleDateString('pt-BR');return String(v);}
+function fs2(v){if(!v)return'';if(v instanceof Date)return v.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});return String(v);}
+
+function parseWB(wb,fname){
+  const names=wb.SheetNames;
+  const lanc=[],fluxo=[],pendentes=[],so_bases=[];
+  const cfxp_desp={},cfxp_rec={},centro_desp={},tipo_desp={};
+
+  const totvsSheet=names.find(n=>/base\s*totvs/i.test(n));
+  const baseSheet=names.find(n=>/base.comp/i.test(n));
+  if(totvsSheet){
+    // Nova fonte: aba "Base Totvs". Localiza colunas pelo nome do cabeçalho (robusto a reordenação)
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[totvsSheet],{header:1,defval:'',raw:true});
+    const hdr=rows[0]||[];
+    const idx=name=>hdr.findIndex(h=>String(h||'').trim().toLowerCase()===name);
+    const cBanco=idx('banco'), cVencto=idx('vencto real'), cBaixa=idx('dt baixa'),
+      cValor=idx('vlr.titulo'), cCfxp=idx('cf xp'), cCentro=idx('nomeclatura. centro'),
+      cFornec=idx('nome fornece'), cTipo=idx('tipo'), cId=idx('id totvs'), cNatureza=idx('natureza');
+    let seq=0;
+    for(let ri=1;ri<rows.length;ri++){
+      const r=rows[ri];
+      const banco=r[cBanco];
+      if(!banco)continue;
+      const vencto=r[cVencto];
+      const dtBaixa=r[cBaixa];
+      const vlrBruto=pn(r[cValor]);
+      if(!vlrBruto)continue;
+      const cfxp=String(r[cCfxp]||'');
+      const centro=String(r[cCentro]||'');
+      const fornecedor=String(r[cFornec]||'');
+      const tipoLanc=String(r[cTipo]||'');
+      const idTotvs=String(r[cId]||('tv'+(seq++)));
+      const natureza=String(r[cNatureza]||'').trim();
+      const isBaixado=(dtBaixa instanceof Date);
+      const sinal=natureza==='10'?1:-1;
+      const v=sinal*Math.abs(vlrBruto);
+      const dataRef=isBaixado?dtBaixa:vencto;
+      const l={id:idTotvs,banco:String(banco),data:fd(dataRef),valor:v,
+        tipo:tipoLanc,descricao:fornecedor.substring(0,60),
+        status:isBaixado?'✅ Conciliado':'⚠ Pendente',tipo_lanc:tipoLanc,
+        fornecedor,centro,cfxp,
+        conciliado:isBaixado,pendente:!isBaixado};
+      lanc.push(l);
+      if(v<0){
+        if(l.cfxp&&l.cfxp!=='VERIFICAR')cfxp_desp[l.cfxp]=(cfxp_desp[l.cfxp]||0)+Math.abs(v);
+        if(l.centro)centro_desp[l.centro]=(centro_desp[l.centro]||0)+Math.abs(v);
+        if(l.tipo_lanc)tipo_desp[l.tipo_lanc]=(tipo_desp[l.tipo_lanc]||0)+Math.abs(v);
+      } else if(v>0){
+        if(l.cfxp)cfxp_rec[l.cfxp]=(cfxp_rec[l.cfxp]||0)+v;
+      }
+      if(!isBaixado){
+        pendentes.push({id:l.id,banco:l.banco,data:l.data,valor:l.valor,
+          descricao:l.descricao,tipo_lanc:l.tipo_lanc,banco_orig:l.banco});
+      }
+    }
+  } else if(baseSheet){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[baseSheet],{header:1,defval:'',raw:true});
+    for(const r of rows){
+      if(!r[0]||!String(r[0]).startsWith('M'))continue;
+      const v=pn(r[3]);
+      const l={id:String(r[0]),banco:String(r[1]||''),data:fd(r[2]),valor:v,
+        tipo:String(r[4]||''),descricao:String(r[5]||'').substring(0,60),
+        status:String(r[6]||''),tipo_lanc:String(r[7]||''),
+        fornecedor:String(r[8]||''),centro:String(r[9]||''),
+        cfxp:String(r[11]||''),
+        conciliado:String(r[6]||'').includes('✅'),
+        pendente:String(r[6]||'').includes('⚠')};
+      lanc.push(l);
+      if(v<0){
+        if(l.cfxp&&l.cfxp!=='VERIFICAR')cfxp_desp[l.cfxp]=(cfxp_desp[l.cfxp]||0)+Math.abs(v);
+        if(l.centro)centro_desp[l.centro]=(centro_desp[l.centro]||0)+Math.abs(v);
+        if(l.tipo_lanc)tipo_desp[l.tipo_lanc]=(tipo_desp[l.tipo_lanc]||0)+Math.abs(v);
+      } else if(v>0){
+        if(l.cfxp)cfxp_rec[l.cfxp]=(cfxp_rec[l.cfxp]||0)+v;
+      }
+    }
+  }
+
+  const flName=names.find(n=>/fluxo/i.test(n));
+  let saldo_ini=0;
+  if(flName){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[flName],{header:1,defval:'',raw:true});
+    for(const r of rows){
+      if(r[1]==='SALDO INICIAL'){saldo_ini=pn(r[12]);}
+      else if(r[1]==='MOVIMENTO'&&r[0]instanceof Date){
+        fluxo.push({data:fd(r[0]),label:fs2(r[0]),entradas:pn(r[2]),saidas:Math.abs(pn(r[3])),
+          itau_cc:pn(r[4]),sant_cc:pn(r[7]),sant_aplic:pn(r[8]),vortx_cc:pn(r[9]),total:pn(r[12])});
+      }
+    }
+  } else if(totvsSheet){
+    // Sem aba "Fluxo" nesta planilha — deriva fluxo diário a partir dos lançamentos já baixados
+    const porDia={};
+    lanc.filter(l=>l.conciliado&&l.data).forEach(l=>{
+      if(!porDia[l.data])porDia[l.data]={entradas:0,saidas:0,dt:parseDateBR(l.data)};
+      if(l.valor>0)porDia[l.data].entradas+=l.valor;
+      else porDia[l.data].saidas+=Math.abs(l.valor);
+    });
+    const dias=Object.entries(porDia).filter(([,v])=>v.dt).sort((a,b)=>a[1].dt-b[1].dt);
+    let acumulado=0;
+    for(const [data,v] of dias){
+      acumulado+=v.entradas-v.saidas;
+      fluxo.push({data:fd(v.dt),label:fs2(v.dt),entradas:v.entradas,saidas:v.saidas,total:acumulado});
+    }
+  }
+
+  const peName=names.find(n=>/pend/i.test(n));
+  if(!totvsSheet&&peName){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[peName],{header:1,defval:'',raw:true});
+    for(const r of rows){
+      if(!r[0]||!String(r[0]).startsWith('M'))continue;
+      pendentes.push({id:String(r[0]),banco:String(r[1]||''),data:fd(r[2]),
+        valor:pn(r[3]),descricao:String(r[5]||'').substring(0,60),tipo_lanc:String(r[7]||'')});
+    }
+  }
+
+  const sbName=names.find(n=>/s[oó].nas/i.test(n)||/bases/i.test(n));
+  if(sbName){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sbName],{header:1,defval:'',raw:true});
+    for(const r of rows){
+      if(!['CF/TOTVS','RH'].includes(r[0]))continue;
+      so_bases.push({origem:String(r[0]),dt_baixa:fd(r[1]),fornecedor:String(r[3]||''),
+        tipo:String(r[4]||''),valor:pn(r[5]),centro:String(r[7]||''),
+        cfxp:String(r[9]||''),categoria:String(r[10]||''),historico:String(r[11]||'')});
+    }
+  }
+
+  const dbName=names.find(n=>/dashboard/i.test(n));
+  const saldos_finais={};
+  if(dbName){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[dbName],{header:1,defval:'',raw:true});
+    for(const r of rows){
+      const label=String(r[0]||'');
+      if(typeof r[1]==='number'&&['Itaú','Santander','Vortx','TOTAL'].some(x=>label.includes(x))){
+        saldos_finais[label]=pn(r[1]);
+      }
+    }
+  }
+
+  // Aba "SALDO" — saldo bancário real por dia (coluna B = nome do banco, colunas seguintes = valor por data da linha de datas)
+  const saldoSheetName=names.find(n=>/^saldo$/i.test(n));
+  let saldoAtual=null, saldoAtualData=null;
+  const saldoRealDiario=[]; // [{data:'DD/MM/YYYY', valor}] — série completa do "Total Geral", para comparar com o saldo baseado em lançamentos
+  if(saldoSheetName){
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[saldoSheetName],{header:1,defval:'',raw:true});
+    let dateRowIdx=-1;
+    for(let i=0;i<rows.length;i++){
+      if(rows[i].filter(v=>v instanceof Date).length>=5){dateRowIdx=i;break;}
+    }
+    if(dateRowIdx>=0){
+      const dateRow=rows[dateRowIdx];
+      const hoje=new Date();hoje.setHours(0,0,0,0);
+      let bestCol=-1,bestDate=null;
+      for(let c=2;c<dateRow.length;c++){
+        const d=dateRow[c];
+        if(d instanceof Date){
+          const dd=new Date(d);dd.setHours(0,0,0,0);
+          if(dd<=hoje&&(!bestDate||dd>bestDate)){bestDate=dd;bestCol=c;}
+        }
+      }
+      if(bestCol<0){
+        for(let c=2;c<dateRow.length;c++){if(dateRow[c]instanceof Date){bestCol=c;bestDate=dateRow[c];break;}}
+      }
+      // Localiza a linha "Total Geral" e captura os valores por banco na coluna de hoje + a série completa do total
+      let totalRowIdx=-1;
+      for(let i=dateRowIdx+1;i<rows.length;i++){
+        const label=String(rows[i][1]||'').trim();
+        if(!label)continue;
+        if(label==='Total Geral'){totalRowIdx=i;break;}
+        if(bestCol>=0&&!['Conta Corrente','Aplicação','Investimento'].includes(label)){
+          saldos_finais[label]=pn(rows[i][bestCol]);
+        }
+      }
+      if(bestCol>=0)saldoAtualData=fd(bestDate);
+      if(bestCol>=0&&totalRowIdx>=0)saldoAtual=pn(rows[totalRowIdx][bestCol]);
+      if(totalRowIdx>=0){
+        for(let c=2;c<dateRow.length;c++){
+          if(dateRow[c]instanceof Date){
+            saldoRealDiario.push({data:fd(dateRow[c]),valor:pn(rows[totalRowIdx][c])});
+          }
+        }
+      }
+    }
+  }
+  // Ancora a curva de fluxo derivada da Base Totvs no saldo real (evita saldo fictício partindo de zero)
+  if(totvsSheet&&saldoAtual!==null&&fluxo.length){
+    const diff=saldoAtual-fluxo[fluxo.length-1].total;
+    fluxo.forEach(f=>f.total+=diff);
+  }
+
+  const tot_rec=lanc.filter(l=>l.valor>0).reduce((a,l)=>a+l.valor,0);
+  const tot_des=Math.abs(lanc.filter(l=>l.valor<0).reduce((a,l)=>a+l.valor,0));
+  const conc=lanc.filter(l=>l.conciliado).length;
+  return {lanc,fluxo,pendentes,so_bases,saldos_finais,saldo_diario:saldoRealDiario,
+    cfxp_desp:Object.fromEntries(Object.entries(cfxp_desp).sort((a,b)=>b[1]-a[1]).slice(0,10)),
+    cfxp_rec:Object.fromEntries(Object.entries(cfxp_rec).sort((a,b)=>b[1]-a[1])),
+    centro_desp:Object.fromEntries(Object.entries(centro_desp).sort((a,b)=>b[1]-a[1]).slice(0,10)),
+    tipo_desp:Object.fromEntries(Object.entries(tipo_desp).sort((a,b)=>b[1]-a[1]).slice(0,8)),
+    stats:{total_lanc:lanc.length,conciliados:conc,pendentes_n:pendentes.length,
+      total_rec:tot_rec,total_des:tot_des,
+      total_pend_val:pendentes.reduce((a,p)=>a+Math.abs(p.valor),0),
+      saldo_final:saldoAtual!==null?saldoAtual:(fluxo.length?fluxo[fluxo.length-1].total:0),
+      saldo_atual_data:saldoAtualData,
+      saldo_inicial:saldo_ini,pct_conciliado:lanc.length?Math.round(100*conc/lanc.length*10)/10:0}};
+}
+
+
+
+function buildGeral(){
+  const lanc=filterByDate(G.lanc);
+  const fluxo=filterByDate(G.fluxo,'data');
+  const s=G.stats,pct=s.pct_conciliado||0;
+  const tot_rec=lanc.filter(l=>l.valor>0).reduce((a,l)=>a+l.valor,0);
+  const tot_des=Math.abs(lanc.filter(l=>l.valor<0).reduce((a,l)=>a+l.valor,0));
+  const salFinal=fluxo.length?fluxo[fluxo.length-1].total:s.saldo_final;
+  // ── Hero: Runway de caixa ──
+  const fluxoRecente=G.fluxo.slice(-30);
+  const saldoAtualReal=G.stats.saldo_final||0;
+  const netDiario=fluxoRecente.length?fluxoRecente.reduce((a,f)=>a+(f.saidas-f.entradas),0)/fluxoRecente.length:0;
+  const runwayDias=netDiario>0?Math.floor(saldoAtualReal/netDiario):null;
+  const radarValueEl=document.getElementById('radar-value');
+  const radarSubEl=document.getElementById('radar-subtext');
+  const radarListEl=document.getElementById('radar-list');
+  if(radarValueEl)radarValueEl.textContent=runwayDias!==null?runwayDias+' dias':'Positivo';
+  if(radarSubEl)radarSubEl.textContent=runwayDias!==null?'de caixa restante no ritmo atual de queima':'fluxo de caixa positivo nos últimos dias — sem queima líquida';
+  if(radarListEl)radarListEl.innerHTML=`
+    <div class="radar-item"><span class="radar-item-label"><span class="radar-dot" style="background:#378ADD"></span>Saldo atual</span><span class="radar-item-value">${fR(saldoAtualReal,true)}</span></div>
+    <div class="radar-item"><span class="radar-item-label"><span class="radar-dot" style="background:${netDiario>0?'#D85A30':'#5DCAA5'}"></span>Média de gastos</span><span class="radar-item-value">${netDiario>0?fR(netDiario,true):'Caixa positivo'}</span></div>
+    <div class="radar-item"><span class="radar-item-label"><span class="radar-dot" style="background:#EF9F27"></span>Baseado nos últimos</span><span class="radar-item-value">${fluxoRecente.length} dias úteis</span></div>`;
+  document.getElementById('kg-geral').innerHTML=`
+    <div class="kc kc-g"><div class="kl">Receita total</div><div class="kv">${fR(tot_rec)}</div><span class="kb bg">${lanc.filter(l=>l.valor>0).length} lançamentos</span></div>
+    <div class="kc"><div class="kl">Total saídas</div><div class="kv">${fR(tot_des)}</div><span class="kb br">${lanc.filter(l=>l.valor<0).length} lançamentos</span></div>
+    <div class="kc"><div class="kl">Saldo final</div><div class="kv">${fR(salFinal)}</div><span class="kb bn">final do período</span></div>`;
+  const fluxo30=fluxo.slice(-30);
+  const dias30=fluxo30.map(f=>f.label||f.data);
+  dc('cFluxo');
+  charts.cFluxo=new Chart(document.getElementById('cFluxo'),{
+    data:{labels:dias30,datasets:[
+      {type:'bar',label:'Entradas',data:fluxo30.map(f=>f.entradas),backgroundColor:'rgba(58,143,196,0.75)',borderRadius:3},
+      {type:'bar',label:'Saídas',data:fluxo30.map(f=>-f.saidas),backgroundColor:'rgba(186,157,58,0.75)',borderRadius:3},
+      {type:'line',label:'Saldo',data:fluxo30.map(f=>f.total),borderColor:'#1a3a5c',backgroundColor:'transparent',tension:.3,pointRadius:3,pointBackgroundColor:'#1a3a5c',yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#999'}},
+        y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#999',callback:v=>fR(v)}},
+        y2:{position:'right',grid:{display:false},ticks:{font:{size:10},color:'#1a3a5c',callback:v=>fR(v)}}}}
+  });
+  // Top saídas por categoria CF XP
+  const tipoMap={};
+  lanc.filter(l=>l.valor<0&&l.cfxp&&l.cfxp!=='VERIFICAR').forEach(l=>{tipoMap[l.cfxp]=(tipoMap[l.cfxp]||0)+Math.abs(l.valor);});
+  const tSorted=Object.entries(tipoMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  dc('cTipoGeral');
+  if(document.getElementById('cTipoGeral'))charts.cTipoGeral=new Chart(document.getElementById('cTipoGeral'),{
+    type:'bar',
+    data:{labels:tSorted.map(e=>e[0]),datasets:[{data:tSorted.map(e=>e[1]),backgroundColor:C.slice(0,tSorted.length),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fR(typeof ctx.parsed==='object'?(ctx.parsed.x??ctx.parsed.y??0):ctx.parsed,true)}}},
+      scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#999',callback:v=>fR(v)}},
+        y:{grid:{display:false},ticks:{font:{size:10},color:'#555'}}}}
+  });
+  // Calendário de pagamentos (Visão Geral)
+  calState.calG.month=new Date().getMonth();
+  calState.calG.year=new Date().getFullYear();
+  renderCal('calG');
+  // Saldo por banco
+  const saldoBancoEl=document.getElementById('saldoBancoList');
+  if(saldoBancoEl){
+    const entries=Object.entries(G.saldos_finais||{});
+    saldoBancoEl.innerHTML=entries.length?entries.map((e,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--bor)">
+        <span style="font-size:11.5px;color:var(--tx2);display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${C[i%C.length]};flex-shrink:0"></span>${e[0]}</span>
+        <span style="font-size:12.5px;font-weight:500;color:var(--tx)">${fR(e[1],true)}</span>
+      </div>`).join(''):`<div style="font-size:11px;color:var(--tx3)">Sem dados de saldo bancário nesta planilha</div>`;
+  }
+}
+
+function buildFluxo(){
+  const fluxo=filterByDate(G.fluxo,'data');
+  const s=G.stats;
+  const te=fluxo.reduce((a,f)=>a+f.entradas,0),ts=fluxo.reduce((a,f)=>a+f.saidas,0);
+  document.getElementById('kg-fluxo').innerHTML=`
+    <div class="kc"><div class="kl">Saldo inicial</div><div class="kv" style="font-size:15px">${fR(s.saldo_inicial||0,true)}</div><span class="kb bn">início do período</span></div>
+    <div class="kc kc-g"><div class="kl">Total entradas</div><div class="kv" style="font-size:15px">${fR(te,true)}</div><span class="kb bg">${G.fluxo.length} dias úteis</span></div>
+    <div class="kc"><div class="kl">Total saídas</div><div class="kv" style="font-size:15px">${fR(ts,true)}</div><span class="kb br">${G.fluxo.length} dias úteis</span></div>
+    <div class="kc"><div class="kl">Saldo final</div><div class="kv" style="font-size:15px">${fR(fluxo.length?fluxo[fluxo.length-1].total:s.saldo_final,true)}</div><span class="kb bn">final do período</span></div>`;
+  // Padrão: últimos 60 dias. Se a pessoa aplicou um filtro de período manual, respeita o intervalo escolhido (mesmo que maior).
+  const temFiltro=!!(dateFilter.de||dateFilter.ate);
+  const fluxoChart=temFiltro?fluxo:fluxo.slice(-60);
+  const dias=fluxoChart.map(f=>f.label||f.data);
+  const saldoRealMap=Object.fromEntries((G.saldo_diario||[]).map(d=>[d.data,d.valor]));
+  const saldoRealSerie=fluxoChart.map(f=>saldoRealMap[f.data]!==undefined?saldoRealMap[f.data]:null);
+  // Deslocamento visual — evita que a linha laranja fique escondida atrás/em cima da azul quando os valores são muito próximos.
+  // O valor exibido no tooltip continua sendo o real (sem deslocamento).
+  const valoresValidos=fluxoChart.map(f=>f.total).filter(v=>v!=null);
+  const maxV=valoresValidos.length?Math.max(...valoresValidos):0;
+  const minV=valoresValidos.length?Math.min(...valoresValidos):0;
+  const amplitude=maxV-minV;
+  const offset=amplitude>0?amplitude*0.08:(Math.abs(maxV)*0.05||1000);
+  const saldoRealSerieDeslocada=saldoRealSerie.map(v=>v===null?null:v+offset);
+  dc('cSaldoDia');
+  charts.cSaldoDia=new Chart(document.getElementById('cSaldoDia'),{
+    type:'line',data:{labels:dias,datasets:[
+      {label:'Saldo (lançamentos baixados)',data:fluxoChart.map(f=>f.total),borderColor:'#1a3a5c',backgroundColor:'rgba(26,58,92,0.07)',tension:.3,pointRadius:3,pointBackgroundColor:'#1a3a5c',fill:true},
+      {label:'Saldo real (aba SALDO)',data:saldoRealSerieDeslocada,realData:saldoRealSerie,borderColor:'#D85A30',backgroundColor:'#fff',tension:.3,pointRadius:4,pointBorderWidth:2,pointBackgroundColor:'#fff',pointBorderColor:'#D85A30',borderWidth:2.5,borderDash:[6,3],spanGaps:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>{
+        const ds=ctx.dataset;
+        const real=ds.realData?ds.realData[ctx.dataIndex]:ctx.parsed.y;
+        return ' '+ds.label+': '+fR(real,true);
+      }}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#999'}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#999',callback:v=>fR(v)}}}}
+  });
+  const noteEl=document.getElementById('cSaldoDiaNote');
+  if(noteEl)noteEl.style.display=saldoRealSerie.some(v=>v!==null)?'block':'none';
+
+}
+
+// ── CALENDÁRIO DE PAGAMENTOS (suporta múltiplas instâncias por prefixo) ──
+let calState={cal:{month:new Date().getMonth(),year:new Date().getFullYear()},calG:{month:new Date().getMonth(),year:new Date().getFullYear()}};
+
+function calNav(prefix,dir){
+  const st=calState[prefix];
+  st.month+=dir;
+  if(st.month>11){st.month=0;st.year++;}
+  if(st.month<0){st.month=11;st.year--;}
+  renderCal(prefix);
+}
+
+function renderCal(prefix){
+  const st=calState[prefix];
+  const el=document.getElementById(prefix+'Grid');
+  const titleEl=document.getElementById(prefix+'Title');
+  const detEl=document.getElementById(prefix+'Detail');
+  if(!el||!titleEl)return;
+
+  // Ocultar detalhe ao trocar mês
+  detEl.style.display='none';
+
+  const hoje=new Date();
+  hoje.setHours(0,0,0,0);
+
+  // Mapear pagamentos pendentes por dia (sem baixa = não conciliado e valor < 0)
+  const pagMap={};
+  G.lanc.filter(l=>l.valor<0&&!l.conciliado&&l.data).forEach(l=>{
+    const d=parseDateBR(l.data);
+    if(!d)return;
+    d.setHours(0,0,0,0);
+    // Só do mês/ano atual do calendário
+    if(d.getFullYear()===st.year&&d.getMonth()===st.month){
+      const key=d.getDate();
+      if(!pagMap[key])pagMap[key]={total:0,items:[]};
+      pagMap[key].total+=Math.abs(l.valor);
+      pagMap[key].items.push({
+        fornecedor:l.fornecedor||l.tipo_lanc||'—',
+        valor:Math.abs(l.valor),
+        atrasado:d<hoje
+      });
+    }
+  });
+
+  // Título do mês
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  titleEl.textContent=meses[st.month]+' de '+st.year;
+
+  // Primeiro dia da semana do mês
+  const firstDay=new Date(st.year,st.month,1).getDay();
+  const daysInMonth=new Date(st.year,st.month+1,0).getDate();
+
+  let html='';
+
+  // Células vazias antes do dia 1
+  for(let i=0;i<firstDay;i++){
+    html+=`<div style="padding:4px;min-height:36px"></div>`;
+  }
+
+  // Dias do mês
+  for(let d=1;d<=daysInMonth;d++){
+    const isHoje=(d===hoje.getDate()&&st.month===hoje.getMonth()&&st.year===hoje.getFullYear());
+    const pag=pagMap[d];
+    const dataD=new Date(st.year,st.month,d);
+    dataD.setHours(0,0,0,0);
+    const atrasado=pag&&dataD<hoje;
+    const futuro=pag&&dataD>=hoje;
+
+    let bg='';
+    if(isHoje)bg='background:#1a3a5c;color:#fff;';
+    else if(atrasado)bg='background:#9b2335;color:#fff;';
+    else if(futuro)bg='background:#2e6da4;color:#fff;';
+    const cursor=pag?'cursor:pointer;':'';
+    const onclick=pag?`onclick="calShowDetail('${prefix}',${d})"`:'' ;
+
+    html+=`<div ${onclick} style="padding:4px 2px;min-height:36px;text-align:center;position:relative;${cursor}border-radius:6px;transition:background .1s" ${pag?`onmouseover="this.style.background='var(--sur2)'" onmouseout="this.style.background=''"`:''}>
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;${bg}font-size:11px;font-weight:${isHoje||pag?'600':'400'}">${d}</span>
+    </div>`;
+  }
+
+  el.innerHTML=html;
+  el.__pagMap=pagMap;
+}
+
+function calShowDetail(prefix,day){
+  const st=calState[prefix];
+  const el=document.getElementById(prefix+'Grid');
+  const pagMap=el.__pagMap||{};
+  const pag=pagMap[day];
+  if(!pag)return;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const dataD=new Date(st.year,st.month,day); dataD.setHours(0,0,0,0);
+  const atrasado=dataD<hoje;
+
+  const meses=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  document.getElementById(prefix+'DetailTitle').innerHTML=
+    `<span style="color:${atrasado?'#9b2335':'#2e6da4'}">${atrasado?'⚠ Atrasado':'📅 A vencer'}</span> &nbsp;${day} de ${meses[st.month]} — Total: <strong>${fR(pag.total,true)}</strong>`;
+
+  const sorted=pag.items.sort((a,b)=>b.valor-a.valor);
+  document.getElementById(prefix+'DetailList').innerHTML=sorted.map(i=>
+    `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bor)">
+      <span style="max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.fornecedor}</span>
+      <span style="font-weight:500;color:var(--tx)">${fR(i.valor,true)}</span>
+    </div>`
+  ).join('');
+  document.getElementById(prefix+'Detail').style.display='block';
+}
+
+function buildDesp(){
+  const lancF=filterByDate(G.lanc);
+  const total_des=Math.abs(lancF.filter(l=>l.valor<0).reduce((a,l)=>a+l.valor,0));
+  const cfxp_desp={},centro_desp={};
+  lancF.filter(l=>l.valor<0).forEach(l=>{
+    if(l.cfxp&&l.cfxp!=='VERIFICAR')cfxp_desp[l.cfxp]=(cfxp_desp[l.cfxp]||0)+Math.abs(l.valor);
+    if(l.centro)centro_desp[l.centro]=(centro_desp[l.centro]||0)+Math.abs(l.valor);
+  });
+  const cfxpSorted=Object.entries(cfxp_desp).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maior=cfxpSorted[0]||['—',0];
+  document.getElementById('kg-desp').innerHTML=`
+    <div class="kc"><div class="kl">Total despesas</div><div class="kv">${fR(total_des)}</div><span class="kb br">${lancF.filter(l=>l.valor<0).length} lançamentos</span></div>
+    <div class="kc"><div class="kl">Maior categoria</div><div class="kv" style="font-size:13px">${maior[0].substring(0,14)}</div><span class="kb br">${fR(maior[1])}</span></div>
+    <div class="kc"><div class="kl">Centros de custo</div><div class="kv">${Object.keys(centro_desp).length}</div><span class="kb bn">ativos</span></div>`;
+  const ck=cfxpSorted.map(e=>e[0]),cv=cfxpSorted.map(e=>e[1]);
+  dc('cDespBar');
+  charts.cDespBar=new Chart(document.getElementById('cDespBar'),{
+    type:'bar',data:{labels:ck,datasets:[{data:cv,backgroundColor:C,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fR(typeof ctx.parsed==='object'?(ctx.parsed.x??ctx.parsed.y??0):ctx.parsed,true)}}},
+      scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#999',callback:v=>fR(v)}},y:{grid:{display:false},ticks:{font:{size:10},color:'#555'}}}}
+  });
+
+  // Top fornecedores por valor
+  const fornMap={};
+  lancF.filter(l=>l.valor<0&&l.fornecedor&&l.fornecedor.trim()).forEach(l=>{
+    const f=l.fornecedor.trim();
+    fornMap[f]=(fornMap[f]||0)+Math.abs(l.valor);
+  });
+  const fornSorted=Object.entries(fornMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  dc('cFornDesp');
+  charts.cFornDesp=new Chart(document.getElementById('cFornDesp'),{
+    type:'bar',
+    data:{labels:fornSorted.map(e=>e[0].length>22?e[0].substring(0,22)+'…':e[0]),
+      datasets:[{data:fornSorted.map(e=>e[1]),backgroundColor:'#2e6da4',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:ctx=>fornSorted[ctx[0].dataIndex][0],
+        label:ctx=>' '+fR(typeof ctx.parsed==='object'?(ctx.parsed.x??ctx.parsed.y??0):ctx.parsed,true)}}},
+      scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#999',callback:v=>fR(v)}},
+        y:{grid:{display:false},ticks:{font:{size:10},color:'#555'}}}}
+  });
+  // Calendário
+  calState.cal.month=new Date().getMonth();
+  calState.cal.year=new Date().getFullYear();
+  renderCal('cal');
+}
+
+// ── FILTRO DE DATA ──
+let dateFilter={de:null,ate:null};
+
+function applyDateFilter(){
+  const de=document.getElementById('fDe').value;
+  const ate=document.getElementById('fAte').value;
+  dateFilter.de=de?new Date(de):null;
+  dateFilter.ate=ate?new Date(ate):null;
+  dateFilter.ate&&dateFilter.ate.setHours(23,59,59);
+  const hasFilter=!!(de||ate);
+  document.getElementById('dfClear').style.display=hasFilter?'flex':'none';
+  const badge=document.getElementById('filter-badge');
+  if(badge)badge.style.display=hasFilter?'inline':'none';
+  if(G.loaded)setTimeout(renderCur,50);
+}
+
+function clearDateFilter(){
+  document.getElementById('fDe').value='';
+  document.getElementById('fAte').value='';
+  dateFilter={de:null,ate:null};
+  document.getElementById('dfClear').style.display='none';
+  const badge=document.getElementById('filter-badge');
+  if(badge)badge.style.display='none';
+  if(G.loaded)setTimeout(renderCur,50);
+}
+
+function parseDateBR(s){
+  if(!s)return null;
+  const p=s.split('/');
+  if(p.length===3)return new Date(+p[2],+p[1]-1,+p[0]);
+  return new Date(s);
+}
+
+function filterByDate(arr,dateField='data'){
+  if(!dateFilter.de&&!dateFilter.ate)return arr;
+  return arr.filter(item=>{
+    const d=parseDateBR(item[dateField]);
+    if(!d||isNaN(d))return true;
+    if(dateFilter.de&&d<dateFilter.de)return false;
+    if(dateFilter.ate&&d>dateFilter.ate)return false;
+    return true;
+  });
+}
+
+const TITLES={geral:'Visão Geral',fluxo:'Fluxo de Caixa',despesas:'Despesas'};
+const EYE_SECTIONS=['geral','fluxo'];
+
+function nav(el){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');curSec=el.dataset.s;
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+curSec).classList.add('active');
+  document.getElementById('pt').textContent=TITLES[curSec];
+  // Olho só nas abas geral e fluxo
+  const eyeBtn=document.getElementById('btnEye');
+  if(eyeBtn&&G.loaded){
+    eyeBtn.style.display=EYE_SECTIONS.includes(curSec)?'flex':'none';
+  }
+  if(G.loaded)setTimeout(renderCur,50);
+}
+function renderCur(){
+  if(curSec==='geral')       buildGeral();
+  else if(curSec==='fluxo')  buildFluxo();
+  else if(curSec==='despesas')buildDesp();
+}
+
+(async function(){
+  await initApp('demo');
+})();
+</script>
+</body>
+</html>
